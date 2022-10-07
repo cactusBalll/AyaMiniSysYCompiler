@@ -9,7 +9,6 @@ import java.util.LinkedList;
 public abstract class Value {
     protected LinkedList<MyNode<User>> users; // 这个值的使用者
     private Ty type;
-    private String name;
 
     //反正都是Object，Java泛型也是半残
     private final MyNode node = new MyNode<>(this);
@@ -29,19 +28,12 @@ public abstract class Value {
     }
 
 
-
-
-    public String getName() {
-        return name;
-    }
     public Value(Value rhs) {
         users = (LinkedList<MyNode<User>>) rhs.users.clone();
         type = rhs.type; // type是不可变类型
-        name = rhs.name; // String 也不可变
     }
     public Value(Ty type, String name) {
         this.type = type;
-        this.name = name;
         this.users = new LinkedList<>();
     }
 
@@ -65,9 +57,6 @@ public abstract class Value {
         return type;
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
 
     public void setType(Ty type) {
         this.type = type;

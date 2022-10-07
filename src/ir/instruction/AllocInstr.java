@@ -18,6 +18,14 @@ public class AllocInstr extends Instr{
     private AllocType allocType;
     private Ty allocTy;
 
+    public AllocType getAllocType() {
+        return allocType;
+    }
+
+    public Ty getAllocTy() {
+        return allocTy;
+    }
+
     public AllocInstr(Ty allocTy, AllocType allocType) {
         super(new LinkedList<>(), new ArrayList<>());
         this.allocType = allocType;

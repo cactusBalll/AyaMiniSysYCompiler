@@ -1,6 +1,7 @@
 package ty;
 
 import java.util.List;
+import java.util.Objects;
 
 public class FuncTy extends Ty{
     private final Ty ret;
@@ -22,5 +23,18 @@ public class FuncTy extends Ty{
 
     public Ty getRet() {
         return ret;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        FuncTy funcTy = (FuncTy) o;
+        return Objects.equals(ret, funcTy.ret) && Objects.equals(params, funcTy.params);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(ret, params);
     }
 }

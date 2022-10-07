@@ -6,8 +6,19 @@ import util.MyNode;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.List;
 
 public class Function extends User{
+
+    private String name;
+
+    private final List<Value> params = new ArrayList<>();
+
+    public Function(Ty ty, String name) {
+        super(new LinkedList<>(), new ArrayList<>());
+        this.setType(ty);
+        this.name = name;
+    }
 
     private final MyList<BasicBlock> list = new MyList<>();
 
@@ -27,7 +38,4 @@ public class Function extends User{
         super(rhs);
     }
 
-    public Function(Ty type, String name) {
-        super(type, name);
-    }
 }
