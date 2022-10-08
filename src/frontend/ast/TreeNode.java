@@ -1,5 +1,8 @@
 package frontend.ast;
 
+import frontend.Token;
+
+import java.util.List;
 import java.util.function.Function;
 
 public class TreeNode {
@@ -28,4 +31,24 @@ public class TreeNode {
         System.out.println(current);
     }
 
+    /**
+     * 调用前需要保证n是个非终结符
+     * @param n
+     * @param i
+     * @return
+     */
+    public static TreeNode childAt(TreeNode n, int i) {
+        return ((NonTerminator)n).getChild(i);
+    }
+
+    public static String match(TreeNode n, int i, Token.Type type) {
+        TreeNode child = ((NonTerminator)n).getChild(i);
+        if (!(child instanceof Terminator)) {
+            return null;
+        }
+        if (((Terminator)child).getToken().getType() == type) {
+            return ((Terminator) child).getToken().getText();
+        }
+        return null;
+    }
 }

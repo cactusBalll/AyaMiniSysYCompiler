@@ -1,7 +1,7 @@
 package frontend;
 
 public class Token {
-    enum Type{
+    public enum Type{
         IDENFR,
         INTCON,
         STRCON,

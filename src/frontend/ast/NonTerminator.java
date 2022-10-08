@@ -91,6 +91,13 @@ public class NonTerminator extends TreeNode{
         return children;
     }
 
+    public TreeNode getChild(int i) {
+        return children.get(i);
+    }
+
+    public int getChildSize() {
+        return children.size();
+    }
     @Override
     public String toString() {
         return String.format("<%s>",type);
