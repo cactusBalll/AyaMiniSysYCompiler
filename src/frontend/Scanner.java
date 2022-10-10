@@ -197,17 +197,17 @@ public class Scanner {
                         int tempLine = line; // 记录当前行
                         advance();
                         addToken(Token.Type.STRCON, buffer.toString());
-                        for (int i = 0; i < buffer.length(); i++) {
+                        for (int i = 1; i < buffer.length() - 1; i++) { // 注意token是包括前后的引号的，需要去掉
                             char c1 = buffer.charAt(i);
                             if (!isLegalStrConChar(c1)) {
                                 if (c1 == '%') {
-                                    if (i + 1 >= buffer.length() || buffer.charAt(i+1) != 'd') {
+                                    if (i + 1 >= buffer.length() - 1 || buffer.charAt(i+1) != 'd') {
                                         ErrorHandler.getInstance()
                                                 .addError(RequiredErr.buildIllegalFormatString(tempLine));
                                     }
                                 }
                                 if (c1 == '\\') {
-                                    if (i + 1 >= buffer.length() || buffer.charAt(i+1) != 'n') {
+                                    if (i + 1 >= buffer.length() - 1 || buffer.charAt(i+1) != 'n') {
                                         ErrorHandler.getInstance()
                                                 .addError(RequiredErr.buildIllegalFormatString(tempLine));
                                     }

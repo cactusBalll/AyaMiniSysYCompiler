@@ -43,12 +43,16 @@ public class IRGen {
                 genDef((NonTerminator) decl.getChild(i), onStack, true);
             }
         } else {
-
+            for (int i = 1; i < decl.getChildSize(); i+=2) {
+                assert decl.getChild(i) instanceof NonTerminator &&
+                        ((NonTerminator) decl.getChild(i)).getType() == NonTerminator.Type.VarDef;
+                genDef((NonTerminator) decl.getChild(i), onStack, false);
+            }
         }
     }
 
     public void genDef(NonTerminator def, boolean onStack, boolean isConst) throws IRGenErr {
-
+        
     }
 
 
