@@ -24,7 +24,7 @@ public class InitVal extends Value{
     }
 
     // 保证相同值的InitVal指向同一个实例
-    public InitVal buildInitVal(int value) {
+    public static InitVal buildInitVal(int value) {
         if (allocatedInitVal.containsKey(value)) {
             return allocatedInitVal.get(value);
         } else {

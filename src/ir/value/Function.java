@@ -26,6 +26,10 @@ public class Function extends User{
         return list;
     }
 
+    public BasicBlock getFirstBB() {
+        return list.getFirst().getValue();
+    }
+
     public Function(LinkedList<MyNode<User>> users, ArrayList<Value> uses) {
         super(users, uses);
     }

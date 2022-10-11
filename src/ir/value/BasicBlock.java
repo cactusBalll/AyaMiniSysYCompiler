@@ -15,6 +15,10 @@ public class BasicBlock extends Value{
         return list;
     }
 
+    public void addInstr(Instr instr) {
+        list.add(instr.getNode());
+    }
+
     public BasicBlock(LinkedList<MyNode<User>> users, Ty type) {
         super(users, type);
     }
