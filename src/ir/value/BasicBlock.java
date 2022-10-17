@@ -19,6 +19,10 @@ public class BasicBlock extends Value{
         list.add(instr.getNode());
     }
 
+    public BasicBlock() {
+        super(new LinkedList<>());
+    }
+
     public BasicBlock(LinkedList<MyNode<User>> users, Ty type) {
         super(users, type);
     }

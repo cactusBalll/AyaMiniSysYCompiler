@@ -11,25 +11,18 @@ import java.util.List;
 
 public class LoadInstr extends Instr{
 
-    public LoadInstr(Value ptr, List<Value> indexes) {
+    public LoadInstr(Value ptr, Value index) {
         super(new LinkedList<>(), new ArrayList<>());
         this.uses.add(ptr.getNode());
-        for (Value v :
-                indexes) {
-            this.uses.add(v.getNode());
-        }
+        this.uses.add(index.getNode());
     }
 
     public Value getPtr() {
         return this.uses.get(0).getValue();
     }
 
-    public List<Value> getIndexes() {
-        List<Value> indexes = new ArrayList<>();
-        for (int i = 1; i < uses.size(); i++) {
-            indexes.add(uses.get(i).getValue());
-        }
-        return indexes;
+    public Value getIndexes() {
+        return this.uses.get(1).getValue();
     }
 
     public LoadInstr(LinkedList<MyNode<User>> users, ArrayList<Value> uses) {

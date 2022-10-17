@@ -13,7 +13,7 @@ public class FuncTy extends Ty{
         this.params = params;
     }
 
-    public FuncTy build(Ty ret, List<Ty> params) {
+    public static FuncTy build(Ty ret, List<Ty> params) {
         return new FuncTy(ret, params);
     }
 

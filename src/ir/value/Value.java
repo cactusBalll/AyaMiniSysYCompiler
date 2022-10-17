@@ -7,6 +7,17 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 
 public abstract class Value {
+
+    protected String name;
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
     protected LinkedList<MyNode<User>> users; // 这个值的使用者
     private Ty type;
 

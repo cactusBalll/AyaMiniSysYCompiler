@@ -12,12 +12,13 @@ public class Function extends User{
 
     private String name;
 
-    private final List<Value> params = new ArrayList<>();
+    private final List<Param> params = new ArrayList<>();
 
-    public Function(Ty ty, String name) {
+    public Function(Ty ty, String name, List<Param> params) {
         super(new LinkedList<>(), new ArrayList<>());
         this.setType(ty);
         this.name = name;
+        this.params.addAll(params);
     }
 
     private final MyList<BasicBlock> list = new MyList<>();

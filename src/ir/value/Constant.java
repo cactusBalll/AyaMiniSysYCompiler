@@ -10,18 +10,28 @@ public class Constant {
     private final int value;
     private final List<Integer> listValue;
 
+    private final boolean zeroInitialized;
+
     public Constant(Ty ty, List<Integer> listValue) {
         this.ty = ty;
         this.listValue = listValue;
         this.value = 0;
+        zeroInitialized = false;
     }
 
     public Constant(Ty ty, int value) {
         this.ty = ty;
         this.listValue = null;
         this.value = value;
+        zeroInitialized = false;
     }
 
+    public Constant(Ty ty) {
+        this.ty = ty;
+        this.listValue = null;
+        this.value = 0;
+        zeroInitialized = true;
+    }
     public Ty getTy() {
         return ty;
     }
@@ -35,6 +45,9 @@ public class Constant {
     }
 
     public int getValue(int idx1, int idx2) {
+        if (zeroInitialized) {
+            return 0;
+        }
         if (!(ty instanceof IntArrTy)) {
             return 0;
         } else {

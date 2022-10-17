@@ -26,14 +26,11 @@ public class StoreInstr extends Instr{
         super(type, name);
     }
 
-    public StoreInstr(Value ptr, Value target, List<Value> indexes) {
+    public StoreInstr(Value ptr, Value target, Value index) {
         super(new LinkedList<>(), new ArrayList<>());
         this.uses.add(ptr.getNode());
         this.uses.add(target.getNode());
-        for (Value index :
-                indexes) {
-            this.uses.add(index.getNode());
-        }
+        this.uses.add(index.getNode());
     }
 
     public Value getPtr() {
@@ -44,11 +41,7 @@ public class StoreInstr extends Instr{
         return this.uses.get(1).getValue();
     }
 
-    public List<Value> getIndexes() {
-        List<Value> indexes = new ArrayList<>();
-        for (int i = 2; i < uses.size(); i++) {
-            indexes.add(uses.get(i).getValue());
-        }
-        return indexes;
+    public Value getIndex() {
+        return this.uses.get(2).getValue();
     }
 }
