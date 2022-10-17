@@ -15,13 +15,18 @@ import java.util.LinkedList;
  */
 public class ArrView extends Instr{
 
-    public ArrView(Value arr) {
+    public ArrView(Value arr,Value idx) {
         super(new LinkedList<>(), new ArrayList<>());
         uses.add(arr.getNode());
+        uses.add(idx.getNode());
     }
 
     public Value getArr() {
         return uses.get(0).getValue();
+    }
+
+    public Value getIdx() {
+        return uses.get(1).getValue();
     }
     public ArrView(LinkedList<MyNode<User>> users, ArrayList<Value> uses) {
         super(users, uses);

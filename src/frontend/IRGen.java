@@ -111,6 +111,7 @@ public class IRGen {
         return p;
     }
     private void genBlock(NonTerminator block) throws IRGenErr{
+        symbolTable.pushScope();
         for (int i = 1; i < block.getChildSize() - 1; i++) {
             NonTerminator declOrStmt = (NonTerminator) block.getChild(i);
             if (declOrStmt.getType() == NonTerminator.Type.Decl) {
@@ -119,12 +120,56 @@ public class IRGen {
                 genStmt(declOrStmt);
             }
         }
+        symbolTable.popScope();
     }
 
     private void genStmt(NonTerminator stmt) throws IRGenErr{
         if (stmt.getInnerType() == NonTerminator.InnerType.AssignStmt) {
-            //genLVal()
+            Value v = genExp((NonTerminator) stmt.getChild(2));
+            genLLVal((NonTerminator) stmt.getChild(0), v);
+        } else if (stmt.getInnerType() == NonTerminator.InnerType.ExpStmt) {
+            genExp((NonTerminator) stmt.getChild(2));
+        } else if (stmt.getInnerType() == NonTerminator.InnerType.BlockStmt) {
+            genBlock((NonTerminator) stmt.getChild(0));
+        } else if (stmt.getInnerType() == NonTerminator.InnerType.InputStmt) {
+            Value v = irGenManager.genInput();
+            genLLVal((NonTerminator) stmt.getChild(0), v);
+        } else if (stmt.getInnerType() == NonTerminator.InnerType.PrintfStmt) {
+            if (((Terminator)stmt.getChild(2)).getToken().isWrongFormat()) {
+                return; // format 格式已经错了，跳过这条语句
+            }
+            List<Value> params = new ArrayList<>();
+            for (int i = 4; i < stmt.getChildSize() - 2; i++) {
+                params.add(genExp((NonTerminator) stmt.getChild(i)));
+            }
+            String t = stmt.getChild(2).toString();
+            genPrintf(t.substring(1,t.length()-1), params, ((Terminator) stmt.getChild(2)).getToken().getLine());//去掉前后引号
+
         }
+    }
+
+    private void genPrintf(String format, List<Value> params, int line) {
+        StringBuilder sb = new StringBuilder();
+        int idx = 0;
+        for (int i = 0; i < format.length(); i++) {
+            if (format.charAt(i) == '%') {
+                i++; // skip d
+                irGenManager.genPutStr(sb.toString());
+                sb = new StringBuilder();
+                if (idx >= params.size()) {
+                    ErrorHandler.getInstance().addError(RequiredErr.buildPrintfParamNotMatch(line));
+                    return;
+                }
+                irGenManager.genPutInt(params.get(idx));
+                idx++;
+            } else {
+                sb.append(format.charAt(i));
+            }
+        }
+        if (idx < params.size()) {
+            ErrorHandler.getInstance().addError(RequiredErr.buildPrintfParamNotMatch(line));
+        }
+        irGenManager.genPutStr(sb.toString());
     }
     private void genDecl(NonTerminator decl, boolean onStack) throws IRGenErr {
         if (TreeNode.match(decl, 0, Token.Type.CONSTTK) != null) {
@@ -296,13 +341,13 @@ public class IRGen {
             if (op.getToken().getType() == Token.Type.NOT) {
                 return irGenManager.genBinaryOp(BinaryOp.OpType.Nor,
                         InitVal.buildInitVal(0),
-                        genLVal((NonTerminator) exp.getChild(1),false));
+                        genLVal((NonTerminator) exp.getChild(1)));
             } else if (op.getToken().getType() == Token.Type.MINU) {
                 return irGenManager.genBinaryOp(BinaryOp.OpType.Sub,
                         InitVal.buildInitVal(0),
-                        genLVal((NonTerminator) exp.getChild(1), false));
+                        genLVal((NonTerminator) exp.getChild(1)));
             } else if (op.getToken().getType() == Token.Type.PLUS) {
-                return genLVal((NonTerminator) exp.getChild(1), false);
+                return genLVal((NonTerminator) exp.getChild(1));
             }
         } else if (exp.getChild(0) instanceof Terminator) {
             Terminator t = (Terminator) exp.getChild(0);
@@ -336,18 +381,61 @@ public class IRGen {
             String s = TreeNode.match(exp, 0, Token.Type.INTCON);
             return InitVal.buildInitVal(Integer.parseInt(s));
         } else {
-            return genLVal((NonTerminator) exp.getChild(0), false);
+            return genLVal((NonTerminator) exp.getChild(0));
         }
     }
 
-    private Value genLVal(NonTerminator exp, boolean isL) throws IRGenErr {
+    /**
+     * 产生“左边的左值”，这时对于LVal应该生成store
+     * @param exp
+     * @param target
+     * @throws IRGenErr
+     */
+    private void genLLVal(NonTerminator exp, Value target) throws IRGenErr {
         Token token = ((Terminator) exp.getChildren().get(0)).getToken();
         String name = token.toString();
         VarElem varElem = symbolTable.getVarOrGenErr(name, token.getLine());
         if (varElem != null) {
             if (exp.getChildren().size() == 1) {
                 if (varElem.getEn() == VarElem.En.Const) {
-                    return InitVal.buildInitVal(varElem.getConstant().getValue());
+                    ErrorHandler.getInstance().addError(RequiredErr.buildConstModified(token.getLine()));
+                } else if (varElem.getEn() == VarElem.En.Alloc) {
+                    irGenManager.genStoreInstr(varElem.getAlloc(), InitVal.buildInitVal(0), target);
+                } else if (varElem.getEn() == VarElem.En.Param) {
+                    irGenManager.genStoreInstr(varElem.getParam(), InitVal.buildInitVal(0), target);
+                }
+            } else if (exp.getChildren().size() == 4) { // ID[exp]
+                Value idx0 = genExp((NonTerminator) exp.getChild(2));
+                if (varElem.getEn() == VarElem.En.Alloc) {
+                    AllocInstr allocInstr = varElem.getAlloc();
+                    irGenManager.genStoreInstr(allocInstr, idx0, target);
+                } else {
+                    irGenManager.genStoreInstr(varElem.getParam(), idx0, target);
+                }
+
+            } else if (exp.getChildren().size() == 7) { // ID[exp][exp]
+                Value idx0 = genExp((NonTerminator) exp.getChild(2));
+                Value idx1 = genExp((NonTerminator) exp.getChild(5));
+                if (varElem.getEn() == VarElem.En.Alloc) {
+                    Value idx = irGenManager.genIndex(varElem.getAlloc(), idx0, idx1);
+                    irGenManager.genStoreInstr(varElem.getAlloc(), idx, target);
+                } else {
+                    Value idx = irGenManager.genIndex(varElem.getParam(), idx0, idx1);
+                    irGenManager.genStoreInstr(varElem.getParam(), idx, target);
+                }
+            }
+        }
+    }
+    private Value genLVal(NonTerminator exp) throws IRGenErr {
+        Token token = ((Terminator) exp.getChildren().get(0)).getToken();
+        String name = token.toString();
+        VarElem varElem = symbolTable.getVarOrGenErr(name, token.getLine());
+        if (varElem != null) {
+            if (exp.getChildren().size() == 1) {
+                if (varElem.getEn() == VarElem.En.Const) {
+                        return InitVal.buildInitVal(varElem.getConstant().getValue());
+
+
                 } else if (varElem.getEn() == VarElem.En.Alloc) {
                     return irGenManager.genLoadInstr(varElem.getAlloc(), InitVal.buildInitVal(0));
                 } else if (varElem.getEn() == VarElem.En.Param) {
@@ -356,16 +444,30 @@ public class IRGen {
                     return InitVal.buildInitVal(0);
                 }
             } else if (exp.getChildren().size() == 4) { // ID[exp]
-                AllocInstr allocInstr = varElem.getAlloc();
-                Value idx = genExp((NonTerminator) exp.getChild(2));
-                return irGenManager.genLoadInstr(allocInstr, idx);
+                Value idx0 = genExp((NonTerminator) exp.getChild(2));
+                if (varElem.getEn() == VarElem.En.Alloc) {
+                    AllocInstr allocInstr = varElem.getAlloc();
+                    IntArrTy ty = (IntArrTy) allocInstr.getAllocTy();
+                    if (ty.getDims().size() == 2) {
+                        //取不到元素
+                        irGenManager.genArrView(allocInstr, idx0);
+                    } else {
+                        irGenManager.genLoadInstr(allocInstr, idx0);
+                    }
+                } else {
+                    irGenManager.genLoadInstr(varElem.getParam(), idx0);
+                }
+
             } else if (exp.getChildren().size() == 7) { // ID[exp][exp]
-                AllocInstr allocInstr = varElem.getAlloc();
                 Value idx0 = genExp((NonTerminator) exp.getChild(2));
                 Value idx1 = genExp((NonTerminator) exp.getChild(5));
-                assert  allocInstr.getAllocTy() instanceof IntArrTy;
-                Value idx = irGenManager.genIndex(allocInstr, idx0, idx1);
-                return irGenManager.genLoadInstr(allocInstr, idx);
+                if (varElem.getEn() == VarElem.En.Alloc) {
+                    Value idx = irGenManager.genIndex(varElem.getAlloc(), idx0, idx1);
+                    irGenManager.genLoadInstr(varElem.getAlloc(), idx);
+                } else {
+                    Value idx = irGenManager.genIndex(varElem.getParam(), idx0, idx1);
+                    irGenManager.genLoadInstr(varElem.getParam(), idx);
+                }
             }
         }
         return InitVal.buildInitVal(0);

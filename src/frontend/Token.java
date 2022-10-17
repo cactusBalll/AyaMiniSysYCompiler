@@ -45,6 +45,16 @@ public class Token {
     private final int line;  // 行号
     private final String text;
 
+    private boolean wrongFormat = false;
+
+    public boolean isWrongFormat() {
+        return wrongFormat;
+    }
+
+    public void setWrongFormat(boolean wrongFormat) {
+        this.wrongFormat = wrongFormat;
+    }
+
     public Type getType() {
         return type;
     }

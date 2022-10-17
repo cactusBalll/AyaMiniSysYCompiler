@@ -30,6 +30,24 @@ public class IRGenManager {
         return function;
     }
 
+    public BuiltinCallInstr genInput() {
+        BuiltinCallInstr builtin = new BuiltinCallInstr(BuiltinCallInstr.Func.GetInt, InitVal.buildInitVal(0));
+        nwBlock.addInstr(builtin);
+        return builtin;
+    }
+
+    public BuiltinCallInstr genPutStr(String str) {
+        Value v = new MyString(str);
+        BuiltinCallInstr builtin = new BuiltinCallInstr(BuiltinCallInstr.Func.PutStr, v);
+        nwBlock.addInstr(builtin);
+        return builtin;
+    }
+
+    public BuiltinCallInstr genPutInt(Value v) {
+        BuiltinCallInstr builtin = new BuiltinCallInstr(BuiltinCallInstr.Func.PutInt, v);
+        nwBlock.addInstr(builtin);
+        return builtin;
+    }
     public AllocInstr genStaticData(Ty type, Constant initVal, String name) {
         AllocInstr allocInstr = new AllocInstr(type, AllocInstr.AllocType.Static, initVal);
         allocInstr.setName(name);
@@ -91,9 +109,29 @@ public class IRGenManager {
         return loadInstr;
     }
 
-    public Value genIndex(AllocInstr allocInstr, Value i, Value j) {
-        assert allocInstr.getAllocTy() instanceof IntArrTy;
-        Value offset = InitVal.buildInitVal(((IntArrTy) allocInstr.getAllocTy()).getDims().get(1));
+    public ArrView genArrView(Value ptr, Value idx) {
+        ArrView arrView = new ArrView(ptr, idx);
+        nwBlock.addInstr(arrView);
+        return arrView;
+    }
+    public StoreInstr genStoreInstr(Value ptr, Value idx, Value target) {
+        StoreInstr storeInstr = new StoreInstr(ptr, idx, target);
+        nwBlock.addInstr(storeInstr);
+        return storeInstr;
+    }
+
+    public Value genIndex(Value instr, Value i, Value j) {
+        Value offset;
+        if (instr instanceof  AllocInstr) {
+            AllocInstr allocInstr = (AllocInstr)instr;
+            offset = InitVal.buildInitVal(((IntArrTy) allocInstr.getAllocTy()).getDims().get(1));
+        } else if (instr instanceof Param){
+            Param param = (Param) instr;
+            offset = InitVal.buildInitVal(((IntArrTy) param.getType()).getDims().get(1));
+        } else {
+            offset = InitVal.buildInitVal(0);
+        }
+
         Instr instr0 = new BinaryOp(BinaryOp.OpType.Mul, i, offset);
         Instr instr1 = new BinaryOp(BinaryOp.OpType.Add, instr0, j);
 

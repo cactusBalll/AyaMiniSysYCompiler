@@ -204,12 +204,14 @@ public class Scanner {
                                     if (i + 1 >= buffer.length() - 1 || buffer.charAt(i+1) != 'd') {
                                         ErrorHandler.getInstance()
                                                 .addError(RequiredErr.buildIllegalFormatString(tempLine));
+                                        tokens.get(tokens.size()-1).setWrongFormat(true);
                                     }
                                 }
                                 if (c1 == '\\') {
                                     if (i + 1 >= buffer.length() - 1 || buffer.charAt(i+1) != 'n') {
                                         ErrorHandler.getInstance()
                                                 .addError(RequiredErr.buildIllegalFormatString(tempLine));
+                                        tokens.get(tokens.size()-1).setWrongFormat(true);
                                     }
                                 }
                             }

@@ -51,6 +51,7 @@ public class NonTerminator extends TreeNode{
         ExpStmt,
         EptStmt,
         AssignStmt,
+        BlockStmt,
     }//内部用来区别的类型
 
     public Type getType() {

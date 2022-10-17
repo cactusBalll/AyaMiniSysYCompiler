@@ -3,6 +3,7 @@ package ir.instruction;
 import ir.value.Constant;
 import ir.value.User;
 import ir.value.Value;
+import ty.IntTy;
 import ty.Ty;
 import util.MyNode;
 
@@ -13,7 +14,8 @@ public class AllocInstr extends Instr{
 
     public enum AllocType{
         Static,
-        Stack
+        Stack,
+        Slice,
     }
 
     private AllocType allocType;
@@ -34,7 +36,10 @@ public class AllocInstr extends Instr{
     public Constant getInitVal() {
         return initVal;
     }
-
+    private static AllocInstr nullPtr = new AllocInstr(IntTy.build(false), AllocType.Static, null);
+    public static AllocInstr getNullPtr() {
+        return nullPtr;
+    }
     public AllocInstr(Ty allocTy, AllocType allocType, Constant initVal) {
         super(new LinkedList<>(), new ArrayList<>());
         this.allocType = allocType;

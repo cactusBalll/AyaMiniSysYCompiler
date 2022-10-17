@@ -394,6 +394,7 @@ public class Parser {
             intoNonTerminator(NonTerminator.Type.Block);
             block();
             outNonTerminator();
+            ((NonTerminator)current).setInnerType(NonTerminator.InnerType.BlockStmt);
         } else if (peek().getType() == Token.Type.SEMICN) {
             consume();
             ((NonTerminator)current).setInnerType(NonTerminator.InnerType.EptStmt);
