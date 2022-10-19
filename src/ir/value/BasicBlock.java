@@ -42,4 +42,15 @@ public class BasicBlock extends Value{
     public BasicBlock(LinkedList<MyNode<User>> users) {
         super(users);
     }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(name).append(":\n");
+        for (MyNode<Instr> instrNode:
+            list){
+            sb.append('\t').append(instrNode.getValue().toString()).append('\n');
+        }
+        return sb.toString();
+    }
 }

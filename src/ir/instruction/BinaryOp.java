@@ -58,5 +58,13 @@ public class BinaryOp extends Instr{
         super(type, name);
     }
 
-
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(name).append(" = ");
+        sb.append(opType.toString().toLowerCase())
+                .append(' ').append(getLeft().getName())
+                .append(',').append(getRight().getName());
+        return sb.toString();
+    }
 }

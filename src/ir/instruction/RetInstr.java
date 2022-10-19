@@ -10,13 +10,26 @@ import java.util.LinkedList;
 
 public class RetInstr extends Instr{
 
+    boolean isRetNull = false;
     public RetInstr(Value retValue) {
         super(new LinkedList<>(), new ArrayList<>());
         this.uses.add(retValue.getNode());
     }
 
+    public boolean isRetNull() {
+        return isRetNull;
+    }
+
+    public RetInstr() {
+        super(new LinkedList<>(), new ArrayList<>());
+        this.isRetNull = true;
+    }
     public Value getRetValue() {
-        return this.uses.get(0).getValue();
+        if (!isRetNull) {
+            return this.uses.get(0).getValue();
+        } else {
+            return null;
+        }
     }
 
     public RetInstr(LinkedList<MyNode<User>> users, ArrayList<Value> uses) {
@@ -33,5 +46,15 @@ public class RetInstr extends Instr{
 
     public RetInstr(Ty type, String name) {
         super(type, name);
+    }
+
+    @Override
+    public String toString() {
+        if (!isRetNull) {
+            return "ret " + getRetValue().getName();
+        } else {
+            return "ret";
+        }
+
     }
 }

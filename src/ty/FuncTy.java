@@ -13,6 +13,17 @@ public class FuncTy extends Ty{
         this.params = params;
     }
 
+    public boolean isMatchedCall(List<Ty> cParams) {
+        if (params.size() != cParams.size()) {
+            return false;
+        }
+        for (int i = 0; i < params.size(); i++) {
+            if (!Objects.equals(params.get(i),cParams.get(i))) {
+                return false;
+            }
+        }
+        return true;
+    }
     public static FuncTy build(Ty ret, List<Ty> params) {
         return new FuncTy(ret, params);
     }

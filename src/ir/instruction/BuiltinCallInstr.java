@@ -27,4 +27,17 @@ public class BuiltinCallInstr extends Instr {
     public Value getParam() {
         return uses.get(0).getValue();
     }
+
+    @Override
+    public String toString() {
+        switch (func) {
+            case PutInt:
+                return "putint("+ getParam().getName() +')';
+            case GetInt:
+                return getName() + " = getint()";
+            case PutStr:
+                return "putstr(" + getParam().toString() + ')';
+        }
+        return "";
+    }
 }

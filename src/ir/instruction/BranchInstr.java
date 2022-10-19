@@ -9,6 +9,9 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
+/**
+ * 我好像写重了。。
+ */
 public class BranchInstr extends Instr{
 
     enum BranchType{
@@ -65,5 +68,15 @@ public class BranchInstr extends Instr{
 
     public BranchInstr(Ty type, String name) {
         super(type, name);
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("br ");
+        sb.append(getCond().getName()).append(',');
+        sb.append(getBranches().get(0).getName()).append(',');
+        sb.append(getBranches().get(1).getName());
+        return sb.toString();
     }
 }

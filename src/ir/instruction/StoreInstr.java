@@ -44,4 +44,9 @@ public class StoreInstr extends Instr{
     public Value getIndex() {
         return this.uses.get(2).getValue();
     }
+
+    @Override
+    public String toString() {
+        return "store " + getTarget().getName() + ','+ getPtr().getName() +'['+getIndex().getName()+']';
+    }
 }

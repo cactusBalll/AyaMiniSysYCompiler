@@ -43,4 +43,12 @@ public class ArrView extends Instr{
     public ArrView(Ty type, String name) {
         super(type, name);
     }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(name).append(" = ");
+        sb.append("arrView ").append(getArr().getName()).append(',').append(getIdx().getName());
+        return sb.toString();
+    }
 }

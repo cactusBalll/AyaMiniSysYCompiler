@@ -48,4 +48,18 @@ public class CallInstr extends Instr{
     public CallInstr(Ty type, String name) {
         super(type, name);
     }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(name).append(" = ");
+        sb.append(getFunction().getName()).append('(');
+        for (Value v :
+                getParams()) {
+            sb.append(v.getName()).append(',');
+        }
+        sb.append(')');
+        return sb.toString();
+    }
+
 }

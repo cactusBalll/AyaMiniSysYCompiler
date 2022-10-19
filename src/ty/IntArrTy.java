@@ -36,11 +36,36 @@ public class IntArrTy extends Ty{
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         IntArrTy intArrTy = (IntArrTy) o;
-        return Objects.equals(dims, intArrTy.dims);
+        if (dims.size() != intArrTy.dims.size()) {
+            return false;
+        }
+        /*for (int i = 0; i < dims.size(); i++) {
+            if (dims.get(i) != ANY_DIM &&
+                    intArrTy.dims.get(i) != ANY_DIM &&
+                    !Objects.equals(dims.get(i), intArrTy.dims.get(i))) {
+                return false;
+            }
+        }*/
+        // 维数一样就行了
+        return true;
     }
-
     @Override
     public int hashCode() {
         return Objects.hash(dims);
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("int");
+        for (Integer dim :
+                dims) {
+            if (dim == ANY_DIM) {
+                sb.append("[]");
+            } else {
+                sb.append('[').append(dim).append(']');
+            }
+        }
+        return sb.toString();
     }
 }

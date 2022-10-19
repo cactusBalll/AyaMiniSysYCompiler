@@ -15,7 +15,6 @@ public class AllocInstr extends Instr{
     public enum AllocType{
         Static,
         Stack,
-        Slice,
     }
 
     private AllocType allocType;
@@ -60,5 +59,17 @@ public class AllocInstr extends Instr{
 
     public AllocInstr(Ty type, String name) {
         super(type, name);
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(name).append(" = ");
+        sb.append("alloc").append(' ').append(allocType).append(' ').append(allocTy);
+        if (allocType == AllocType.Static) {
+            sb.append(" := ").append(initVal);
+        }
+
+        return sb.toString();
     }
 }

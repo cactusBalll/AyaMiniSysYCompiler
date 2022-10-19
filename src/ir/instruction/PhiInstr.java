@@ -45,4 +45,15 @@ public class PhiInstr extends Instr{
     public PhiInstr(Ty type, String name) {
         super(type, name);
     }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(name).append(" = phi ");
+        for (Pair<Value, BasicBlock> pair:
+            getPhiPairs()){
+            sb.append('[').append(pair.getFirst().getName()).append(',').append(pair.getLast().getName()).append(']');
+        }
+        return sb.toString();
+    }
 }

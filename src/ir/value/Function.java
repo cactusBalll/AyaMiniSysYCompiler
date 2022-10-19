@@ -1,5 +1,6 @@
 package ir.value;
 
+import ty.FuncTy;
 import ty.Ty;
 import util.MyList;
 import util.MyNode;
@@ -10,9 +11,12 @@ import java.util.List;
 
 public class Function extends User{
 
-    private String name;
 
     private final List<Param> params = new ArrayList<>();
+
+    public List<Param> getParams() {
+        return params;
+    }
 
     public Function(Ty ty, String name, List<Param> params) {
         super(new LinkedList<>(), new ArrayList<>());
@@ -43,4 +47,23 @@ public class Function extends User{
         super(rhs);
     }
 
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(name);
+        sb.append('(');
+        for (Param p :
+                params) {
+            sb.append(p.name).append(':').append(p.getType()).append(',');
+        }
+        sb.append("):").append(((FuncTy)getType()).getRet());
+        sb.append("{\n");
+        for (MyNode<BasicBlock> bbNode :
+                list) {
+            sb.append(bbNode.getValue());
+        }
+        sb.append("\n}");
+
+        return sb.toString();
+    }
 }

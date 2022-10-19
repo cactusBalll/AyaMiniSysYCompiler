@@ -66,4 +66,14 @@ public class InitVal extends Value{
     public InitVal(LinkedList<MyNode<User>> users) {
         super(users);
     }
+
+    @Override
+    public String toString() {
+        return String.valueOf(value);
+    }
+
+    @Override
+    public String getName() {
+        return String.valueOf(value);
+    }
 }

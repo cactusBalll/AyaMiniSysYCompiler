@@ -8,4 +8,9 @@ public class MyString extends Value{
         super(new LinkedList<>());
         this.str = str;
     }
+
+    @Override
+    public String toString() {
+        return "\""+str+"\"";
+    }
 }

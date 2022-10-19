@@ -59,4 +59,22 @@ public class Constant {
             }
         }
     }
+
+    @Override
+    public String toString() {
+        if (listValue != null) {
+            StringBuilder sb = new StringBuilder();
+            sb.append('[');
+            for (int v :
+                    listValue) {
+                sb.append(v).append(',');
+            }
+            sb.append(']');
+            return sb.toString();
+        } else if (zeroInitialized){
+            return "zeroInit";
+        } else {
+            return String.valueOf(value);
+        }
+    }
 }

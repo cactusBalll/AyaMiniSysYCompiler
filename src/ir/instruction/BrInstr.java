@@ -45,4 +45,12 @@ public class BrInstr extends Instr{
     public BrInstr(Ty type, String name) {
         super(type, name);
     }
+
+    @Override
+    public String toString() {
+        return "br " +
+                getCond().getName() + ',' +
+                getBr0().getName() + ',' +
+                getBr1().getName();
+    }
 }

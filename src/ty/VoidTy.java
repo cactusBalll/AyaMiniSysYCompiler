@@ -10,4 +10,14 @@ public class VoidTy extends Ty{
     public VoidTy(boolean isConst) {
         super(isConst);
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        return obj instanceof VoidTy;
+    }
+
+    @Override
+    public String toString() {
+        return "void";
+    }
 }

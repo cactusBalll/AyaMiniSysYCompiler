@@ -40,4 +40,9 @@ public class LoadInstr extends Instr{
     public LoadInstr(Ty type, String name) {
         super(type, name);
     }
+
+    @Override
+    public String toString() {
+        return name + "= load " + getPtr().getName() + '[' + getIndexes().getName() + ']';
+    }
 }
