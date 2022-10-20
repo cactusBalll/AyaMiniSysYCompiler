@@ -154,10 +154,12 @@ public class Scanner {
                             // 单行注释
                             advance();
                             advance();
-                            while (next() != '\n') {
+                            while (!isAtEnd() && next() != '\n') {
                                 advance();
                             }
-                            advance();
+                            if (!isAtEnd()) {
+                                advance();
+                            }
                         } else {
                             // 除法
                             addToken(Token.Type.DIV, "/");
@@ -205,14 +207,20 @@ public class Scanner {
                                         ErrorHandler.getInstance()
                                                 .addError(RequiredErr.buildIllegalFormatString(tempLine));
                                         tokens.get(tokens.size()-1).setWrongFormat(true);
+                                        break;
                                     }
-                                }
-                                if (c1 == '\\') {
+                                } else if (c1 == '\\') {
                                     if (i + 1 >= buffer.length() - 1 || buffer.charAt(i+1) != 'n') {
                                         ErrorHandler.getInstance()
                                                 .addError(RequiredErr.buildIllegalFormatString(tempLine));
                                         tokens.get(tokens.size()-1).setWrongFormat(true);
+                                        break;
                                     }
+                                } else {
+                                    ErrorHandler.getInstance()
+                                            .addError(RequiredErr.buildIllegalFormatString(tempLine));
+                                    tokens.get(tokens.size()-1).setWrongFormat(true);
+                                    break;
                                 }
                             }
                         }

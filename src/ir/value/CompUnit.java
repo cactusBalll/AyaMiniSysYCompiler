@@ -5,6 +5,8 @@ import ir.instruction.Instr;
 import util.MyList;
 import util.MyNode;
 
+import java.util.function.Consumer;
+
 public class CompUnit {
 
     private final MyList<AllocInstr> globalValueList = new MyList<>();
@@ -26,6 +28,7 @@ public class CompUnit {
         int cnt = 0;
         for (MyNode<Function> funcNode :
                 list) {
+            cnt = 0;
             Function func = funcNode.getValue();
             for (Param p :
                     func.getParams()) {
@@ -80,5 +83,38 @@ public class CompUnit {
             sb.append(funcNode.getValue().toString()).append("\n\n");
         }
         return sb.toString();
+    }
+
+    public void forEveryFunction(java.util.function.Consumer<Function> f) {
+        for (MyNode<Function> funcNode :
+                list) {
+            f.accept(funcNode.getValue());
+        }
+    }
+
+    public void forEveryBasicBlock(Consumer<BasicBlock> f) {
+        for (MyNode<Function> funcNode :
+                list) {
+            Function func = funcNode.getValue();
+            for (MyNode<BasicBlock> bbNode:
+                    func.getList()) {
+                f.accept(bbNode.getValue());
+            }
+        }
+    }
+
+    public void forEveryInstr(Consumer<Instr> f) {
+        for (MyNode<Function> funcNode :
+                list) {
+            Function func = funcNode.getValue();
+            for (MyNode<BasicBlock> bbNode:
+                    func.getList()) {
+                BasicBlock bb = bbNode.getValue();
+                for (MyNode<Instr> instrNode :
+                        bb.getList()) {
+                    f.accept(instrNode.getValue());
+                }
+            }
+        }
     }
 }

@@ -3,7 +3,7 @@ package frontend;
 /**
  * 被要求输出的错误
  */
-public class RequiredErr{
+public class RequiredErr implements Comparable<RequiredErr>{
     private final char identifier;
     private final int line;
 
@@ -63,5 +63,10 @@ public class RequiredErr{
     }
     public static RequiredErr buildCtrlOutOfLoop(int line) {
         return  new RequiredErr('m', line);
+    }
+
+    @Override
+    public int compareTo(RequiredErr o) {
+        return line - o.line;
     }
 }

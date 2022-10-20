@@ -2,6 +2,7 @@ package frontend;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class ErrorHandler {
     private final static ErrorHandler instance = new ErrorHandler();
@@ -25,9 +26,10 @@ public class ErrorHandler {
 
     @Override
     public String toString() {
+
         StringBuilder sb = new StringBuilder();
         for (RequiredErr err :
-                requiredErrList) {
+                requiredErrList.stream().sorted().collect(Collectors.toList())) {
             sb.append(err.toString()).append('\n');
         }
         return sb.toString();

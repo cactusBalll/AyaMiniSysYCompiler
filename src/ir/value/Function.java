@@ -50,7 +50,7 @@ public class Function extends User{
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append(name);
+        sb.append('%').append(name);
         sb.append('(');
         for (Param p :
                 params) {

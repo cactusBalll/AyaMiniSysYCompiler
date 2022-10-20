@@ -64,6 +64,9 @@ public class AllocInstr extends Instr{
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
+        if (allocType == AllocType.Static) {
+            sb.append('%');
+        }
         sb.append(name).append(" = ");
         sb.append("alloc").append(' ').append(allocType).append(' ').append(allocTy);
         if (allocType == AllocType.Static) {

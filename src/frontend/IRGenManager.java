@@ -38,6 +38,10 @@ public class IRGenManager {
 
     private BasicBlock retBB = null; // 函数出口块
 
+    public BasicBlock getRetBB() {
+        return retBB;
+    }
+
     private Value retAlloc = null; // 返回值变量
 
     public CompUnit getCompUnit() {
@@ -75,6 +79,7 @@ public class IRGenManager {
             genStoreInstr(retAlloc, InitVal.buildInitVal(0), value);
         }
         genJmp(retBB);
+        getBB();
     }
     public BuiltinCallInstr genInput() {
         BuiltinCallInstr builtin = new BuiltinCallInstr(BuiltinCallInstr.Func.GetInt, InitVal.buildInitVal(0));
@@ -199,8 +204,19 @@ public class IRGenManager {
     }
     public BasicBlock getBB() {
         BasicBlock bb = new BasicBlock();
+        bb.loopDepth = loopBB.size();
         nwFunction.getList().add(bb.getNode());
         nwBlock = bb;
+        return bb;
+    }
+
+    /**
+     * 这不会把BB加到list里，但会维护loopDepth
+     * @return new bb
+     */
+    public BasicBlock buildBB() {
+        BasicBlock bb = new BasicBlock();
+        bb.loopDepth = loopBB.size();
         return bb;
     }
 
