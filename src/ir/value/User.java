@@ -26,8 +26,9 @@ public abstract class User extends Value{
         if (uses.contains(old.getNode())) {
             old.users.remove(this.getNode());
             nnew.users.add((MyNode<User>) this.getNode());
+            int idx = uses.indexOf(old.getNode());
             uses.remove(old.getNode());
-            uses.add(nnew.getNode());
+            uses.add(idx,nnew.getNode());
         }
     }
     public void removeMeFromAllMyUses() {

@@ -70,6 +70,15 @@ public class CompUnit {
         }
     }
 
+    public void maintainBBelong() {
+        forEveryBasicBlock(bb -> {
+            for (MyNode<Instr> instrNode :
+                    bb.getList()) {
+                instrNode.getValue().bbBelongTo = bb;
+            }
+        });
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();

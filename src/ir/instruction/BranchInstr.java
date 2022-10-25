@@ -12,6 +12,7 @@ import java.util.List;
 /**
  * 我好像写重了。。
  */
+@Deprecated
 public class BranchInstr extends Instr{
 
     enum BranchType{

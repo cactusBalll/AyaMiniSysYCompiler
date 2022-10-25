@@ -28,13 +28,13 @@ public class BinaryOp extends Instr{
         Mul,
         Div,
         Mod,
-        Slt,
+        Slt, // 感觉逻辑运算的语义可以当作0和非0，和C一样，这样后端似乎生成代码质量更高
         Sle,
         Sgt,
         Sge,
         Seq,
         Sne,
-        Nor, // MIPS用NOR实现非
+        Not, // MIPS用XOR实现非
     }
     public BinaryOp(OpType opType, Value left, Value right) {
         super(new LinkedList<>(), new ArrayList<>());

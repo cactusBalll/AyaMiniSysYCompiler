@@ -67,7 +67,8 @@ public class IRGenManager {
         addBB(retBB);
         RetInstr ret = null;
         if (retAlloc != null) {
-            ret = new RetInstr(retAlloc);
+            LoadInstr loadInstr = genLoadInstr(retAlloc, InitVal.buildInitVal(0));
+            ret = new RetInstr((Value) loadInstr);
         } else {
             ret = new RetInstr();
         }
@@ -109,18 +110,18 @@ public class IRGenManager {
     public AllocInstr genStackData(Ty type, Value value) {
         AllocInstr allocInstr = new AllocInstr(type, AllocInstr.AllocType.Stack, null);
         StoreInstr init = new StoreInstr(allocInstr, value, InitVal.buildInitVal(0));
-        nwFunction.getFirstBB().addInstr(allocInstr);
+        nwFunction.getFirstBB().addInstrAtFirst(allocInstr);
         nwBlock.addInstr(init);
         return allocInstr;
     }
     public AllocInstr genStackDataNoInit(Ty type) {
         AllocInstr allocInstr = new AllocInstr(type, AllocInstr.AllocType.Stack, null);
-        nwFunction.getFirstBB().addInstr(allocInstr);
+        nwFunction.getFirstBB().addInstrAtFirst(allocInstr);
         return allocInstr;
     }
     public AllocInstr genStackData(Ty type, List<Value> value) {
         AllocInstr allocInstr = new AllocInstr(type, AllocInstr.AllocType.Stack, null);
-        nwFunction.getFirstBB().addInstr(allocInstr);
+        nwFunction.getFirstBB().addInstrAtFirst(allocInstr);
         assert type instanceof IntArrTy;
         IntArrTy intArrTy = (IntArrTy) type;
         if (intArrTy.getDims().size() == 1) {

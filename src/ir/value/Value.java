@@ -79,7 +79,7 @@ public abstract class Value {
     }
 
     public void replaceAllUsesOfMeWith(Value other) {
-        ArrayList<User> usersToReplace = new ArrayList<User>();
+        ArrayList<User> usersToReplace = new ArrayList<>();
         for (MyNode<User> userNode :
                 users) {
             User user = userNode.getValue();
@@ -92,5 +92,7 @@ public abstract class Value {
 
         }
     }
+
+    public BasicBlock bbBelongTo;
 
 }

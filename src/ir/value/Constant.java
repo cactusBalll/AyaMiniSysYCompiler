@@ -60,6 +60,10 @@ public class Constant {
         }
     }
 
+    public boolean isZeroInitialized() {
+        return zeroInitialized;
+    }
+
     @Override
     public String toString() {
         if (listValue != null) {

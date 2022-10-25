@@ -4,6 +4,7 @@ import exceptions.ParseErr;
 import frontend.*;
 import frontend.ast.TreeNode;
 import ir.opt.BBInfo;
+import ir.opt.Mem2Reg;
 import ir.opt.PrecSucc;
 import ir.opt.SimplifyG;
 import ir.value.CompUnit;
@@ -72,10 +73,13 @@ public class Compiler {
             System.out.print(ErrorHandler.getInstance());
         } else {
             compUnit.maintainUser();
+            compUnit.maintainBBelong();
             compUnit.setValueName();
             new PrecSucc().run(compUnit);
             new SimplifyG().run(compUnit);
             new BBInfo().run(compUnit);
+            new Mem2Reg().run(compUnit);
+            compUnit.setValueName();
             System.out.print(compUnit);
         }
     }

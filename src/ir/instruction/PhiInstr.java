@@ -22,6 +22,11 @@ public class PhiInstr extends Instr{
         }
     }
 
+    public void putItem(Pair<Value, BasicBlock> pair) {
+        uses.add(pair.getFirst().getNode());
+        uses.add(pair.getLast().getNode());
+    }
+
     public List<Pair<Value, BasicBlock>> getPhiPairs() {
         List<Pair<Value, BasicBlock>> phiPairs = new ArrayList<>();
         for (int i = 0, usesSize = uses.size(); i < usesSize; i += 2) {

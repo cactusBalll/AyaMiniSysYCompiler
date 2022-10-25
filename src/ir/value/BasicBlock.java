@@ -1,6 +1,8 @@
 package ir.value;
 
+import Driver.AyaConfig;
 import ir.instruction.Instr;
+import jdk.nashorn.internal.runtime.regexp.joni.Config;
 import ty.Ty;
 import util.MyList;
 import util.MyNode;
@@ -49,6 +51,10 @@ public class BasicBlock extends Value{
         list.add(instr.getNode());
     }
 
+    public void addInstrAtFirst(Instr instr) {
+        list.addFirst(instr.getNode());
+    }
+
     public BasicBlock() {
         super(new LinkedList<>());
     }
@@ -77,15 +83,18 @@ public class BasicBlock extends Value{
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append(name).append(":\n");
-        sb.append("prec: ").append(MyUtils.formatList(prec,(o)->((BasicBlock)o).getName())).append('\n');
-        sb.append("succ: ").append(MyUtils.formatList(succ,(o)->((BasicBlock)o).getName())).append('\n');
-        sb.append("domer: ").append(MyUtils.formatList(domer,(o)->((BasicBlock)o).getName())).append('\n');
-        sb.append("doming: ").append(MyUtils.formatList(doming,(o)->((BasicBlock)o).getName())).append('\n');
-        sb.append("idomer: ").append(idomer!=null?idomer.getName():"none").append('\n');
-        sb.append("idoming: ").append(MyUtils.formatList(idoming,(o)->((BasicBlock)o).getName())).append('\n');
-        sb.append("df: ").append(MyUtils.formatList(df,(o)->((BasicBlock)o).getName())).append('\n');
-        sb.append("domDepth: ").append(domDepth).append('\n');
-        sb.append("loopDepth: ").append(loopDepth).append('\n');
+        if (AyaConfig.PRINT_IR_BB_INFO) {
+            sb.append("prec: ").append(MyUtils.formatList(prec,(o)->((BasicBlock)o).getName())).append('\n');
+            sb.append("succ: ").append(MyUtils.formatList(succ,(o)->((BasicBlock)o).getName())).append('\n');
+            sb.append("domer: ").append(MyUtils.formatList(domer,(o)->((BasicBlock)o).getName())).append('\n');
+            sb.append("doming: ").append(MyUtils.formatList(doming,(o)->((BasicBlock)o).getName())).append('\n');
+            sb.append("idomer: ").append(idomer!=null?idomer.getName():"none").append('\n');
+            sb.append("idoming: ").append(MyUtils.formatList(idoming,(o)->((BasicBlock)o).getName())).append('\n');
+            sb.append("df: ").append(MyUtils.formatList(df,(o)->((BasicBlock)o).getName())).append('\n');
+            sb.append("domDepth: ").append(domDepth).append('\n');
+            sb.append("loopDepth: ").append(loopDepth).append('\n');
+        }
+
         for (MyNode<Instr> instrNode:
             list){
             sb.append('\t').append(instrNode.getValue().toString()).append('\n');

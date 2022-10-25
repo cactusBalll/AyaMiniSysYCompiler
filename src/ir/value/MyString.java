@@ -9,6 +9,10 @@ public class MyString extends Value{
         this.str = str;
     }
 
+    public String getStr() {
+        return str;
+    }
+
     @Override
     public String toString() {
         return "\""+str+"\"";

@@ -339,6 +339,15 @@ public class IRGen {
             NonTerminator rel = (NonTerminator) eq.getChild(2);
             Value v1 = genEq(eq2);
             Value v2 = genRel(rel);
+            if (v1 instanceof InitVal && v2 instanceof InitVal) {
+                if (TreeNode.match(eq, 1, Token.Type.EQL) != null) {
+                    int t = ((InitVal) v1).getValue() == ((InitVal) v2).getValue()?1:0;
+                    return InitVal.buildInitVal(t);
+                } else {
+                    int t = ((InitVal) v1).getValue() != ((InitVal) v2).getValue()?1:0;
+                    return InitVal.buildInitVal(t);
+                }
+            }
             if (TreeNode.match(eq, 1, Token.Type.EQL) != null) {
                 return irGenManager.genBinaryOp(BinaryOp.OpType.Seq, v1, v2);
             } else {
@@ -355,6 +364,21 @@ public class IRGen {
             NonTerminator add = (NonTerminator) rel.getChild(2);
             Value v1 = genRel(rel2);
             Value v2 = genAdd(add);
+            if (v1 instanceof InitVal && v2 instanceof InitVal) {
+                if (TreeNode.match(rel, 1, Token.Type.LSS) != null) {
+                    int t = ((InitVal) v1).getValue() < ((InitVal) v2).getValue()?1:0;
+                    return InitVal.buildInitVal(t);
+                } else if (TreeNode.match(rel, 1, Token.Type.LEQ) != null) {
+                    int t = ((InitVal) v1).getValue() <= ((InitVal) v2).getValue()?1:0;
+                    return InitVal.buildInitVal(t);
+                } else if (TreeNode.match(rel, 1, Token.Type.GRE) != null) {
+                    int t = ((InitVal) v1).getValue() >= ((InitVal) v2).getValue()?1:0;
+                    return InitVal.buildInitVal(t);
+                } else {
+                    int t = ((InitVal) v1).getValue() > ((InitVal) v2).getValue()?1:0;
+                    return InitVal.buildInitVal(t);
+                }
+            }
             if (TreeNode.match(rel, 1, Token.Type.LSS) != null) {
                 return irGenManager.genBinaryOp(BinaryOp.OpType.Slt, v1, v2);
             } else if (TreeNode.match(rel, 1, Token.Type.LEQ) != null) {
@@ -536,6 +560,16 @@ public class IRGen {
             Terminator op = (Terminator) exp.getChildren().get(1);
             Value left = genAdd((NonTerminator) exp.getChildren().get(0));
             Value right = genMul((NonTerminator) exp.getChildren().get(2));
+
+            if (left instanceof InitVal && right instanceof InitVal) {
+                if (op.getToken().getType() == Token.Type.PLUS) {
+                    int t = ((InitVal) left).getValue() + ((InitVal) right).getValue();
+                    return InitVal.buildInitVal(t);
+                } else if (op.getToken().getType() == Token.Type.MINU) {
+                    int t = ((InitVal) left).getValue() - ((InitVal) right).getValue();
+                    return InitVal.buildInitVal(t);
+                }
+            }
             if (op.getToken().getType() == Token.Type.PLUS) {
                 return irGenManager.genBinaryOp(BinaryOp.OpType.Add, left, right);
             } else if (op.getToken().getType() == Token.Type.MINU) {
@@ -552,6 +586,18 @@ public class IRGen {
             Terminator op = (Terminator) exp.getChildren().get(1);
             Value left = genMul((NonTerminator) exp.getChildren().get(0));
             Value right = genUnary((NonTerminator) exp.getChildren().get(2));
+            if (left instanceof InitVal && right instanceof InitVal) {
+                if (op.getToken().getType() == Token.Type.MULT) {
+                    int t = ((InitVal) left).getValue() * ((InitVal) right).getValue();
+                    return InitVal.buildInitVal(t);
+                } else if (op.getToken().getType() == Token.Type.DIV) {
+                    int t = ((InitVal) left).getValue() / ((InitVal) right).getValue();
+                    return InitVal.buildInitVal(t);
+                } else if (op.getToken().getType() == Token.Type.MOD) {
+                    int t = ((InitVal) left).getValue() % ((InitVal) right).getValue();
+                    return InitVal.buildInitVal(t);
+                }
+            }
             if (op.getToken().getType() == Token.Type.MULT) {
                 return irGenManager.genBinaryOp(BinaryOp.OpType.Mul, left, right);
             } else if (op.getToken().getType() == Token.Type.DIV) {
@@ -568,7 +614,7 @@ public class IRGen {
                 ((NonTerminator) exp.getChild(0)).getType() == NonTerminator.Type.UnaryOp) {
             Terminator op = (Terminator) ((NonTerminator) exp.getChild(0)).getChild(0);
             if (op.getToken().getType() == Token.Type.NOT) {
-                return irGenManager.genBinaryOp(BinaryOp.OpType.Nor,
+                return irGenManager.genBinaryOp(BinaryOp.OpType.Not,
                         InitVal.buildInitVal(0),
                         genUnary((NonTerminator) exp.getChild(1)));
             } else if (op.getToken().getType() == Token.Type.MINU) {

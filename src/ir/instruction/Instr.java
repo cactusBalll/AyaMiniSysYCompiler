@@ -1,5 +1,6 @@
 package ir.instruction;
 
+import ir.value.BasicBlock;
 import ir.value.User;
 import ir.value.Value;
 import ty.Ty;
@@ -24,4 +25,8 @@ public class Instr extends User {
     public Instr(Ty type, String name) {
         super(type, name);
     }
+
+
+
+    public boolean isNop = false;
 }
