@@ -2,11 +2,28 @@ package backend.instr;
 
 import backend.regs.Reg;
 
+import java.util.HashSet;
+import java.util.Set;
+
 public class MCInstrI extends MCInstr {
     public Reg t;
     public Reg s;
     public int imm;
     public Type type;
+
+    @Override
+    public Set<Reg> getDef() {
+        Set<Reg> ret = new HashSet<>();
+        ret.add(t);
+        return ret;
+    }
+
+    @Override
+    public Set<Reg> getUse() {
+        Set<Reg> ret = new HashSet<>();
+        ret.add(s);
+        return ret;
+    }
 
     public enum Type {
         addu, //pseudo
@@ -22,6 +39,8 @@ public class MCInstrI extends MCInstr {
         addiu,
         slti,
         xori,
+
+        sll,
     }
 
     public MCInstrI(Reg t, Reg s, int imm, Type type) {

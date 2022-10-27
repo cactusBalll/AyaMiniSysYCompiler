@@ -1,10 +1,20 @@
 package backend.instr;
 
+import backend.regs.Reg;
 import util.MyNode;
 
-public class MCInstr {
+import java.util.HashSet;
+import java.util.Set;
+
+public abstract class MCInstr {
     private final MyNode node = new MyNode<>(this);
 
+    public Set<Reg> getDef() {
+        return new HashSet<>();
+    }
+    public Set<Reg> getUse() {
+        return new HashSet<>();
+    }
     public MyNode getNode() {
         return node;
     }

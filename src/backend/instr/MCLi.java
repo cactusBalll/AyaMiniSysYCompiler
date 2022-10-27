@@ -2,6 +2,9 @@ package backend.instr;
 
 import backend.regs.Reg;
 
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  * 伪指令，加载立即数
  */
@@ -17,5 +20,12 @@ public class MCLi extends MCInstr{
     @Override
     public String toString() {
         return String.format("li %s,%d",t,imm);
+    }
+
+    @Override
+    public Set<Reg> getDef() {
+        Set<Reg> ret = new HashSet<>();
+        ret.add(t);
+        return ret;
     }
 }

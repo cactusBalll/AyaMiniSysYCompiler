@@ -9,8 +9,16 @@ public class MCUnit {
     public MyList<MCData> data = new MyList<>();
     public MyList<MCFunction> list = new MyList<>();
 
-
-
+    public MCData getDataByName(String name) {
+        for (MyNode<MCData> d :
+                data) {
+            if (d.getValue().label.name.equals(name)) {
+                return d.getValue();
+            }
+        }
+        assert false;
+        return null;
+    }
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();

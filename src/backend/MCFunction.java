@@ -8,7 +8,8 @@ import util.MyNode;
 public class MCFunction {
     public MyList<MCBlock> list = new MyList<>();
     public int regAllocated = 0; //共分配了多少个虚拟寄存器
-    public Label label; // 函数头部标签
+    public int stackSlot;
+    public MCBlock headBB; // 函数头部基本块
 
     @Override
     public String toString() {

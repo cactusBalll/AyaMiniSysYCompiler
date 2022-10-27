@@ -2,11 +2,14 @@ package backend;
 
 import backend.instr.Label;
 import backend.instr.MCInstr;
+import backend.regs.Reg;
 import util.MyList;
 import util.MyNode;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class MCBlock {
     public Label label;
@@ -14,6 +17,11 @@ public class MCBlock {
 
     public List<MCBlock> prec = new ArrayList<>();
     public List<MCBlock> succ = new ArrayList<>();
+
+    public Set<Reg> liveIn = new HashSet<>();
+    public Set<Reg> liveOut = new HashSet<>();
+    public Set<Reg> def = new HashSet<>();
+    public Set<Reg> use = new HashSet<>();
 
     @Override
     public String toString() {

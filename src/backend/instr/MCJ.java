@@ -1,6 +1,9 @@
 package backend.instr;
 
 import backend.MCBlock;
+import backend.regs.Reg;
+
+import java.util.Set;
 
 public class MCJ extends MCInstr{
     public MCBlock target;
@@ -13,4 +16,6 @@ public class MCJ extends MCInstr{
     public String toString() {
         return 'j' + ' ' + target.label.toString();
     }
+
+
 }

@@ -2,6 +2,9 @@ package backend.instr;
 
 import backend.regs.Reg;
 
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  * Mem[Rs + offset] = Rt
  */
@@ -24,13 +27,33 @@ public class MCSw extends MCInstr{
         offset = null;
     }
 
+    public MCSw(int numOffset, Reg s, Reg t, Label offset) {
+        this.numOffset = numOffset;
+        this.s = s;
+        this.t = t;
+        this.offset = offset;
+    }
+
     @Override
     public String toString() {
         if (offset != null) {
-            return String.format("sw %s,%s(%s)",t,offset,s);
+            if (numOffset == 0) {
+                return String.format("sw %s,%s(%s)",t,offset,s);
+            } else {
+                return String.format("sw %s,%s+%d(%s)",t,offset,numOffset,s);
+            }
         } else {
             return String.format("sw %s,%d(%s)",t,numOffset,s);
         }
 
+    }
+
+
+    @Override
+    public Set<Reg> getUse() {
+        Set<Reg> ret = new HashSet<>();
+        ret.add(t);
+        ret.add(s);
+        return ret;
     }
 }

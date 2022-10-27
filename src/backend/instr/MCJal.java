@@ -1,6 +1,12 @@
 package backend.instr;
 
 import backend.MCBlock;
+import backend.regs.PReg;
+import backend.regs.Reg;
+import exceptions.BackEndErr;
+
+import java.util.HashSet;
+import java.util.Set;
 
 public class MCJal extends MCInstr{
     public MCBlock target;
@@ -13,4 +19,17 @@ public class MCJal extends MCInstr{
     public String toString() {
         return "jal" + ' ' + target.label.toString();
     }
+
+    @Override
+    public Set<Reg> getDef() {
+        Set<Reg> ret = new HashSet<>();
+        try {
+            ret.add(PReg.getRegByName("ra"));
+        } catch (BackEndErr e) {
+            throw new RuntimeException(e);
+        }
+        return null;
+    }
+
+
 }

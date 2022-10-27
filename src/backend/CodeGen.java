@@ -12,6 +12,7 @@ import ir.value.*;
 import ty.IntArrTy;
 import ty.IntTy;
 import util.MyNode;
+import util.Pair;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -30,6 +31,9 @@ public class CodeGen {
     private Map<Value, Label> value2Label = new HashMap<>();
 
     private Map<BasicBlock, MCBlock> bb2mcbb = new HashMap<>();
+    private Map<MCBlock, BasicBlock> mcbb2bb = new HashMap<>();
+
+    private Map<Function, MCFunction> funcMap = new HashMap<>();
 
     //private Map<Value, Reg> value2RegInFunc = new HashMap<>();
 
@@ -105,10 +109,11 @@ public class CodeGen {
         //stackSlot += f.getParams().size(); // 按调用规范，放在寄存器中的参数也要分配栈空间
         stackSlot += 1; // for ra
         MCBlock b = getBlock();
-        mcFunction.label = b.label;
+        mcFunction.headBB = b;
         mcFunction.list.add(b.getNode()); //  加入函数入口块
         bb2mcbb.put(f.getFirstBB(), b);
-
+        mcbb2bb.put(b, f.getFirstBB());
+        
         for (int i = 0; i < Math.min(4, f.getParams().size()); i++) {
             Param p = f.getParams().get(i);
             Reg r = VReg.alloc();
@@ -122,7 +127,7 @@ public class CodeGen {
             for (int i = 4; i < f.getParams().size(); i++) {
                 Param p = f.getParams().get(i);
                 Reg r = VReg.alloc();
-                MCLw instr = new MCLw(r, PReg.getRegByName("sp"), -i * 4);
+                MCLw instr = new MCLw(r, PReg.getRegByName("sp"), -i * 4-4);
                 b.list.add(instr.getNode());
                 value2Reg.put(p, r);
             }
@@ -130,7 +135,7 @@ public class CodeGen {
         List<Reg> calleeSaved = new ArrayList<>();
         for (int i = 0; i < 8; i++) {
             Reg r = VReg.alloc();
-            Reg pr = PReg.getRegById(8 + i);
+            Reg pr = PReg.getRegById(16 + i);
             MCMove instr = new MCMove(r, pr);
             b.list.add(instr.getNode());
             calleeSaved.add(r);
@@ -143,14 +148,244 @@ public class CodeGen {
             } else {
                 MCBlock mcBlock = getBlock();
                 bb2mcbb.put(bb, mcBlock);
+                mcbb2bb.put(mcBlock,bb);
                 genBlock(bb, mcBlock, calleeSaved);
                 mcFunction.list.add(mcBlock.getNode());
 
             }
         }
-
+        
+        stackSlot += f.getParams().size();
+        mcFunction.stackSlot = stackSlot;
+        mcFunction.regAllocated = VReg.getAllocateCounter();
+        //这时还没有生成处理栈的指令，因为部分虚拟寄存器应该分配到栈上，而实际上还没有寄存器分配
+        //这时的stackSlot只包括局部数组ra和参数
+        mappingReplace();
     }
 
+    /**
+     * 对函数里的占位符进行替换
+     */
+    public void mappingReplace() {
+        for (MyNode<MCBlock> bbNode :
+                mcFunction.list) {
+            MCBlock mcbb = bbNode.getValue();
+            BasicBlock bb = mcbb2bb.get(mcbb);
+            mcbb.prec.addAll(bb.prec.stream().map(b-> bb2mcbb.get(b)).collect(Collectors.toList()));
+            mcbb.succ.addAll(bb.succ.stream().map(b-> bb2mcbb.get(b)).collect(Collectors.toList()));
+            for (MyNode<MCInstr> instrNode :
+                    mcbb.list) {
+                MCInstr mcInstr = instrNode.getValue();
+                if (mcInstr instanceof MCInstrR) {
+                    MCInstrR mcInstrR = (MCInstrR) mcInstr;
+                    if (mcInstrR.s instanceof ValueReg) {
+                        mcInstrR.s = value2Reg.get(((ValueReg) mcInstrR.s).value);
+                    }
+                    if (mcInstrR.t instanceof ValueReg) {
+                        mcInstrR.t = value2Reg.get(((ValueReg) mcInstrR.t).value);
+                    }
+                }
+                if (mcInstr instanceof MCInstrI) {
+                    MCInstrI mcInstrI = (MCInstrI) mcInstr;
+                    if (mcInstrI.s instanceof ValueReg) {
+                        mcInstrI.s = value2Reg.get(((ValueReg) mcInstrI.s).value);
+                    }
+                }
+                if (mcInstr instanceof MCInstrB) {
+                    MCInstrB mcInstrB = (MCInstrB) mcInstr;
+                    if (mcInstrB.s instanceof ValueReg) {
+                        mcInstrB.s = value2Reg.get(((ValueReg) mcInstrB.s).value);
+                    }
+                    if (mcInstrB.t instanceof ValueReg) {
+                        mcInstrB.t = value2Reg.get(((ValueReg) mcInstrB.t).value);
+                    }
+                    if (mcInstrB.target instanceof PsuMCBlock) {
+                        mcInstrB.target = bb2mcbb.get(((PsuMCBlock) mcInstrB.target).basicBlock);
+                    }
+                }
+                if (mcInstr instanceof MCJ) {
+                    MCJ mcj = (MCJ) mcInstr;
+                    if (mcj.target instanceof PsuMCBlock) {
+                        mcj.target = bb2mcbb.get(((PsuMCBlock) mcj.target).basicBlock);
+                    }
+                }
+                if (mcInstr instanceof MCJal) {
+                    MCJal mcjal = (MCJal) mcInstr;
+                    if (mcjal.target instanceof PsuMCBlock) {
+                        mcjal.target = bb2mcbb.get(((PsuMCBlock) mcjal.target).basicBlock);
+                    }
+                }
+                //jr only jr $ra
+                //la 只会加载.data的地址
+                if (mcInstr instanceof MCLw) {
+                    MCLw mcLw = (MCLw) mcInstr;
+                    if (mcLw.s instanceof ValueReg) {
+                        mcLw.s = value2Reg.get(((ValueReg) mcLw.s).value);
+                    }
+                }
+                if (mcInstr instanceof MCSw) {
+                    MCSw mcSw = (MCSw) mcInstr;
+                    if (mcSw.s instanceof ValueReg) {
+                        mcSw.s = value2Reg.get(((ValueReg) mcSw.s).value);
+                    }
+                }
+                if (mcInstr instanceof MCMove) {
+                    MCMove mcMove = (MCMove) mcInstr;
+                    if (mcMove.s instanceof ValueReg) {
+                        mcMove.s = value2Reg.get(((ValueReg) mcMove.s).value);
+                    }
+                }
+                if (mcInstr instanceof MCPhi) {
+                    MCPhi mcPhi = (MCPhi) mcInstr;
+                    List<Pair<Reg,MCBlock>> pairs = new ArrayList<>();
+                    for (Pair<Reg, MCBlock> pair :
+                            mcPhi.pairs) {
+                        Pair<Reg,MCBlock> newPair = new Pair<>(
+                                value2Reg.get(((ValueReg)pair.getFirst()).value), 
+                                bb2mcbb.get(((PsuMCBlock)pair.getLast()).basicBlock)
+                        );
+                        pairs.add(newPair);
+                    }
+                    mcPhi.pairs = pairs;
+                }
+            }
+        }
+    }
+
+    /**
+     * 拆解phi，Briggs的论文实在看不懂，phi的def，use怎么算的也没说，就“有很多方法”，
+     * 还是拆关键边吧
+     * SSA Book P37
+     */
+    public void destructPhi() {
+        //拆分关键边
+        for (MCBlock mcbb:
+             mcFunction.list.toList()) {
+            Map<MCBlock, MCParallelCopy> bb2pc = new HashMap<>();
+            for (MCBlock precBB :
+                    mcbb.prec) {
+                MCParallelCopy pc = new MCParallelCopy();
+                if (precBB.succ.size() > 1) {
+                    MCBlock newBB = getBlock();
+                    precBB.succ.remove(mcbb);
+                    precBB.succ.add(newBB);
+                    mcbb.prec.remove(precBB);
+                    mcbb.prec.add(newBB);
+                    replaceJumpTarget(precBB, mcbb, newBB);
+                    replacePhiBlock(mcbb, precBB, newBB);
+                    MCJ mcj = new MCJ(
+                            mcbb
+                    );
+                    newBB.list.add(pc.getNode());
+                    newBB.list.add(mcj.getNode());
+                    newBB.prec.add(precBB);
+                    newBB.succ.add(mcbb);
+                    mcbb.getNode().insertAfter(newBB.getNode());
+                    bb2pc.put(newBB,pc);
+                } else {
+                    precBB.list.addLast(pc.getNode());
+                    bb2pc.put(precBB,pc);
+                }
+
+            }
+            for (MyNode<MCInstr> instrNode :
+                    mcbb.list) {
+                MCInstr instr = instrNode.getValue();
+                if (instr instanceof MCPhi) {
+                    MCPhi phi = (MCPhi) instr;
+                    for (Pair<Reg, MCBlock> p :
+                            phi.pairs) {
+                        bb2pc.get(p.getLast()).copies.add(
+                                new Pair<>(phi.dest, p.getFirst())
+                        );
+                    }
+                }
+            }
+        }
+        //并行复制串行化
+        for (MyNode<MCBlock> mcbbNode:
+                mcFunction.list) {
+            MCBlock mcbb = mcbbNode.getValue();
+            for (MCInstr mcInstr :
+                    mcbb.list.toList()) {
+                if (mcInstr instanceof MCParallelCopy) {
+                    MCParallelCopy pcopy = (MCParallelCopy) mcInstr;
+                    List<MCMove> seq = new ArrayList<>();
+                    while (!pcopy.copies.stream().allMatch(p-> p.getFirst() == p.getLast())) {
+                        java.util.Optional<Pair<Reg, Reg>> s = pcopy.copies.stream().filter(
+                                        p -> p.getFirst()!=p.getLast() &&
+                                                pcopy.copies.stream().noneMatch(
+                                                    p1->p1.getLast() == p.getFirst()))
+                                .findAny();
+                        if (s.isPresent()) {
+                            Pair<Reg, Reg> pair = s.get();
+                            seq.add(new MCMove(pair.getFirst(), pair.getLast()));
+                        } else {
+                            Pair<Reg, Reg> pair = pcopy.copies.stream().filter(
+                                    p -> p.getFirst() != p.getLast()
+                            ).findAny().get();
+
+                            VReg vReg = VReg.alloc();
+                            seq.add(new MCMove(vReg, pair.getLast()));
+                            pcopy.copies.remove(pair);
+                            pcopy.copies.add(new Pair<>(pair.getFirst(), vReg));
+                        }
+                    }
+                    for (MCMove move :
+                            seq) {
+                        mcInstr.getNode().insertBefore(move.getNode());
+                    }
+                    mcInstr.getNode().removeMe();
+                }
+            }
+        }
+    }
+
+    /**
+     * 替换跳转目标，用于关键边拆分
+     * @param old
+     * @param nnew
+     */
+    private void replaceJumpTarget(MCBlock inWhich, MCBlock old,MCBlock nnew) {
+        for (MyNode<MCInstr> instrNode :
+                inWhich.list) {
+            MCInstr instr = instrNode.getValue();
+            if (instr instanceof MCJ) {
+                MCJ mcj = (MCJ)instr;
+                if (mcj.target == old) {
+                    mcj.target = nnew;
+                }
+            }
+            if (instr instanceof MCInstrB) {
+                MCInstrB mcInstrB = (MCInstrB) instr;
+                if (mcInstrB.target == old) {
+                    mcInstrB.target = nnew;
+                }
+            }
+        }
+    }
+    
+    private void replacePhiBlock(MCBlock inWhich, MCBlock old, MCBlock nnew) {
+        for (MyNode<MCInstr> instrNode :
+                inWhich.list) {
+            MCInstr instr = instrNode.getValue();
+            if (instr instanceof MCPhi) {
+                MCPhi phi = (MCPhi) instr;
+                List<Pair<Reg,MCBlock>> pairs = new ArrayList<>();
+                for (Pair<Reg, MCBlock> p :
+                        phi.pairs) {
+                    Pair<Reg,MCBlock> t;
+                    if (p.getLast() == old) {
+                        t = new Pair<>(p.getFirst(),nnew);
+                    } else {
+                        t = p;
+                    }
+                    pairs.add(t);
+                }
+                phi.pairs = pairs;
+            }
+        }
+    }
     /**
      * 从SSA基本块向机器基本块生成代码
      *
@@ -180,14 +415,21 @@ public class CodeGen {
                 int stackOffset = value2StackArr.get(((ArrView) instr).getArr());
                 if (((ArrView) instr).getIdx() instanceof InitVal) {
                     mcInstr = new MCLi(
-                            ((InitVal) ((ArrView) instr).getIdx()).getValue() + stackOffset,
+                            ((InitVal) ((ArrView) instr).getIdx()).getValue() * 4 + stackOffset * 4,
                             vReg
                     );
                 } else {
-                    mcInstr = new MCInstrI(
+                    MCInstr mcInstr1 = new MCInstrI(
                             vReg,
                             new ValueReg(((ArrView) instr).getIdx()),
-                            stackOffset,
+                            2,
+                            MCInstrI.Type.sll
+                    );
+                    mcbb.list.add(mcInstr1.getNode());
+                    mcInstr = new MCInstrI(
+                            vReg,
+                            vReg,
+                            stackOffset * 4,
                             MCInstrI.Type.addu
                     );
                 }
@@ -212,7 +454,8 @@ public class CodeGen {
                             5,
                             PReg.getRegByName("v0")
                     );
-                    MCInstr syscall = new MCSyscall();
+                    MCSyscall syscall = new MCSyscall();
+                    syscall.mayModify = true;
                     mcbb.list.add(mcInstr.getNode());
                     mcbb.list.add(syscall.getNode());
                     value2Reg.put(instr,vReg);
@@ -256,6 +499,253 @@ public class CodeGen {
                     mcbb.list.add(mcInstr.getNode());
                     mcbb.list.add(syscall.getNode());
                 }
+            } else if (instr instanceof CallInstr) {
+                MCFunction mcFunc = funcMap.get(((CallInstr) instr).getFunction());
+                List<Value> params = ((CallInstr) instr).getParams();
+                MCInstr mcInstr;
+                //保存ra
+                mcInstr = new MCSw(
+                        PReg.getRegByName("sp"),
+                        PReg.getRegByName("ra"),
+                        0
+                );
+                mcbb.list.add(mcInstr.getNode());
+                // 压入调用实参
+                for (int i = 0; i < Math.min(params.size(), 4); i++) {
+                    mcInstr = new MCMove(
+                            PReg.getRegById(4+i),
+                            new ValueReg(params.get(i))
+                    );
+                    mcbb.list.add(mcInstr.getNode());
+                }
+                for (int i = 4; i < params.size(); i++) {
+                    mcInstr = new MCSw(
+                            PReg.getRegByName("sp"),
+                            new ValueReg(params.get(i)),
+                            -4*i-4
+                    );
+                    mcbb.list.add(mcInstr.getNode());
+                }
+                mcInstr = new MCJal(mcFunc.headBB);
+                mcbb.list.add(mcInstr.getNode());
+                VReg vReg = VReg.alloc();
+                //获取返回值
+                mcInstr = new MCMove(
+                        vReg,
+                        PReg.getRegByName("v0")
+                );
+                mcbb.list.add(mcInstr.getNode());
+                value2Reg.put(instr, vReg);
+
+                //恢复ra
+            } else if (instr instanceof JmpInstr) {
+                MCInstr mcInstr = new MCJ(
+                        new PsuMCBlock(
+                                ((JmpInstr) instr).getTarget()
+                        )
+                );
+                mcbb.list.add(mcInstr.getNode());
+            } else if (instr instanceof LoadInstr) {
+                Value arr = ((LoadInstr) instr).getPtr();
+                MCInstr mcInstr;
+                VReg vReg;
+                if (arr instanceof AllocInstr) {
+                    AllocInstr alloc = (AllocInstr) arr;
+                    if (alloc.getAllocType() == AllocInstr.AllocType.Static) {
+                        MCData data = mcUnit.getDataByName(alloc.getName());
+                        vReg = VReg.alloc();
+                        if (((LoadInstr) instr).getIndexes() instanceof InitVal) {
+                            mcInstr = new MCLw(
+                                  PReg.getRegById(0),
+                                  vReg,
+                                  data.label,
+                                  ((InitVal) ((LoadInstr) instr).getIndexes()).getValue() * 4
+                            );
+
+                        } else {
+                            mcInstr = new MCLw(
+                                    new ValueReg(((LoadInstr) instr).getIndexes()),
+                                    vReg,
+                                    data.label
+                            );
+                        }
+                    } else {
+                        //局部数组
+                        vReg = VReg.alloc();
+                        int offset = value2StackArr.get(alloc);
+                        if (((LoadInstr) instr).getIndexes() instanceof InitVal) {
+                            mcInstr = new MCLw(
+                                    PReg.getRegByName("sp"),
+                                    vReg,
+                                    ((InitVal) ((LoadInstr) instr).getIndexes()).getValue() * 4 + offset * 4
+                            );
+
+                        } else {
+                            MCInstr mcInstr2 = new MCInstrI(
+                                    PReg.getRegByName("at"),
+                                    new ValueReg(((LoadInstr) instr).getIndexes()),
+                                    2,
+                                    MCInstrI.Type.sll
+                            );
+                            mcbb.list.add(mcInstr2.getNode());
+                            MCInstr mcInstr1 = new MCInstrR(
+                                    PReg.getRegByName("at"),
+                                    PReg.getRegByName("sp"),
+                                    PReg.getRegByName("at"),
+                                    MCInstrR.Type.addu
+                            );
+                            mcbb.list.add(mcInstr1.getNode());
+                            mcInstr = new MCLw(
+                                    PReg.getRegByName("at"),
+                                    vReg,
+                                    offset * 4
+                            );
+                        }
+                    }
+                    mcbb.list.add(mcInstr.getNode());
+                    value2Reg.put(instr,vReg);
+                } else if (arr instanceof ArrView) {
+                    vReg = VReg.alloc();
+                    if (((LoadInstr) instr).getIndexes() instanceof InitVal) {
+                        mcInstr = new MCLw(
+                                new ValueReg(arr),
+                                vReg,
+                                ((InitVal) ((LoadInstr) instr).getIndexes()).getValue() * 4
+                        );
+
+                    } else {
+                        MCInstr mcInstr2 = new MCInstrI(
+                                PReg.getRegByName("at"),
+                                new ValueReg(((LoadInstr) instr).getIndexes()),
+                                2,
+                                MCInstrI.Type.sll
+                        );
+                        mcbb.list.add(mcInstr2.getNode());
+                        MCInstr mcInstr1 = new MCInstrR(
+                                PReg.getRegByName("at"),
+                                new ValueReg(arr),
+                                PReg.getRegByName("at"),
+                                MCInstrR.Type.addu
+                        );
+                        mcbb.list.add(mcInstr1.getNode());
+                        mcInstr = new MCLw(
+                                PReg.getRegByName("at"),
+                                vReg,
+                                0
+                        );
+                    }
+                    mcbb.list.add(mcInstr.getNode());
+                    value2Reg.put(instr,vReg);
+                }
+            } else if (instr instanceof StoreInstr) {
+                Value arr = ((StoreInstr) instr).getPtr();
+                MCInstr mcInstr;
+                if (arr instanceof AllocInstr) {
+                    AllocInstr alloc = (AllocInstr) arr;
+                    if (alloc.getAllocType() == AllocInstr.AllocType.Static) {
+                        MCData data = mcUnit.getDataByName(alloc.getName());
+                        if (((StoreInstr) instr).getIndex() instanceof InitVal) {
+                            mcInstr = new MCSw(
+                                    ((InitVal) ((StoreInstr) instr).getIndex()).getValue() * 4,
+                                    PReg.getRegById(0),
+                                    new ValueReg(((StoreInstr) instr).getTarget()),
+                                    data.label
+                            );
+
+                        } else {
+                            mcInstr = new MCSw(
+                                    new ValueReg(((StoreInstr) instr).getIndex()),
+                                    new ValueReg(((StoreInstr) instr).getTarget()),
+                                    data.label
+                            );
+                        }
+                    } else {
+                        //局部数组
+                        int offset = value2StackArr.get(alloc);
+                        if (((StoreInstr) instr).getIndex() instanceof InitVal) {
+                            mcInstr = new MCSw(
+                                    PReg.getRegByName("sp"),
+                                    new ValueReg(((StoreInstr) instr).getTarget()),
+                                    ((InitVal) ((StoreInstr) instr).getIndex()).getValue() * 4 + offset * 4
+                            );
+
+                        } else {
+                            MCInstr mcInstr2 = new MCInstrI(
+                                    PReg.getRegByName("at"),
+                                    new ValueReg(((StoreInstr) instr).getIndex()),
+                                    2,
+                                    MCInstrI.Type.sll
+                            );
+                            mcbb.list.add(mcInstr2.getNode());
+                            MCInstr mcInstr1 = new MCInstrR(
+                                    PReg.getRegByName("at"),
+                                    PReg.getRegByName("sp"),
+                                    PReg.getRegByName("at"),
+                                    MCInstrR.Type.addu
+                            );
+                            mcbb.list.add(mcInstr1.getNode());
+                            mcInstr = new MCSw(
+                                    PReg.getRegByName("at"),
+                                    new ValueReg(((StoreInstr) instr).getTarget()),
+                                    offset * 4
+                            );
+                        }
+                    }
+                    mcbb.list.add(mcInstr.getNode());
+                } else if (arr instanceof ArrView) {
+                    if (((StoreInstr) instr).getIndex() instanceof InitVal) {
+                        mcInstr = new MCSw(
+                                new ValueReg(arr),
+                                new ValueReg(((StoreInstr) instr).getTarget()),
+                                ((InitVal) ((StoreInstr) instr).getIndex()).getValue() * 4
+                        );
+
+                    } else {
+                        MCInstr mcInstr2 = new MCInstrI(
+                                PReg.getRegByName("at"),
+                                new ValueReg(((StoreInstr) instr).getIndex()),
+                                2,
+                                MCInstrI.Type.sll
+                        );
+                        mcbb.list.add(mcInstr2.getNode());
+                        MCInstr mcInstr1 = new MCInstrR(
+                                PReg.getRegByName("at"),
+                                new ValueReg(arr),
+                                PReg.getRegByName("at"),
+                                MCInstrR.Type.addu
+                        );
+                        mcbb.list.add(mcInstr1.getNode());
+                        mcInstr = new MCSw(
+                                PReg.getRegByName("at"),
+                                new ValueReg(((StoreInstr) instr).getTarget()),
+                                0
+                        );
+                    }
+                    mcbb.list.add(mcInstr.getNode());
+                }
+            } else if (instr instanceof PhiInstr) {
+                VReg vReg = VReg.alloc();
+                MCInstr phi = MCPhi.fromPhi((PhiInstr) instr);
+                mcbb.list.add(phi.getNode());
+                value2Reg.put(instr, vReg);
+            } else if (instr instanceof RetInstr) {
+                for (int i = 0; i < calleeSaved.size(); i++) {
+                    Reg r = calleeSaved.get(i);
+                    MCInstr mcInstr1 = new MCMove(
+                            PReg.getRegById(16+i),
+                            r
+                    );
+                    mcbb.list.add(mcInstr1.getNode());
+                } // 恢复被调用者保护寄存器
+                MCInstr mcInstr = new MCMove(
+                        PReg.getRegByName("v0"),
+                        new ValueReg(((RetInstr) instr).getRetValue())
+                );
+                MCInstr mcInstr1 = new MCJr(
+                        PReg.getRegByName("ra")
+                );
+                mcbb.list.add(mcInstr.getNode());
+                mcbb.list.add(mcInstr1.getNode());
             }
         }
     }

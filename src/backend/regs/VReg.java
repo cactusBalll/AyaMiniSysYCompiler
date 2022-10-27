@@ -5,6 +5,10 @@ public class VReg extends Reg{
 
     private static int allocateCounter = 0;
 
+    public static int getAllocateCounter() {
+        return allocateCounter;
+    }
+
     public static VReg alloc() {
         VReg ret = new VReg(allocateCounter);
         allocateCounter++;
