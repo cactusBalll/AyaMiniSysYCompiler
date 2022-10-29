@@ -10,6 +10,6 @@ public class MCAsciiz extends MCData{
 
     @Override
     public String toString() {
-        return String.format("%s: .asciiz \"%s\"", label, string);
+        return String.format("%s: .asciiz \"%s\"", label.name, string);
     }
 }

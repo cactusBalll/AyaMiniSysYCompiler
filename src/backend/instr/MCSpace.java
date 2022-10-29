@@ -10,6 +10,6 @@ public class MCSpace extends MCData{
 
     @Override
     public String toString() {
-        return String.format("%s: .space %d", label, sizeInWord * 4);
+        return String.format("%s: .space %d", label.name, sizeInWord * 4);
     }
 }

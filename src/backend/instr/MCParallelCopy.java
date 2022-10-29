@@ -1,5 +1,6 @@
 package backend.instr;
 
+import backend.regs.PReg;
 import backend.regs.Reg;
 import util.Pair;
 
@@ -17,6 +18,12 @@ public class MCParallelCopy extends MCInstr{
                 copies) {
             sb.append(pair.getFirst()).append("<-").append(pair.getLast()).append(',');
         }
+        sb.append(']');
         return sb.toString();
+    }
+
+    @Override
+    public void allocate(Reg vReg, PReg pReg) {
+
     }
 }

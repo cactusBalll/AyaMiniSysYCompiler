@@ -1,5 +1,6 @@
 package backend.instr;
 
+import backend.regs.PReg;
 import backend.regs.Reg;
 
 import java.util.HashSet;
@@ -16,7 +17,7 @@ public class MCLa extends MCInstr{
 
     @Override
     public String toString() {
-        return String.format("la %s,%s",s,target);
+        return String.format("la %s,%s",s,target.name);
     }
 
     @Override
@@ -24,5 +25,12 @@ public class MCLa extends MCInstr{
         Set<Reg> ret = new HashSet<>();
         ret.add(s);
         return ret;
+    }
+
+    @Override
+    public void allocate(Reg vReg, PReg pReg) {
+        if (s == vReg) {
+            s = pReg;
+        }
     }
 }

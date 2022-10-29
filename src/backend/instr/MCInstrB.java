@@ -1,6 +1,7 @@
 package backend.instr;
 
 import backend.MCBlock;
+import backend.regs.PReg;
 import backend.regs.Reg;
 
 import java.util.HashSet;
@@ -26,6 +27,16 @@ public class MCInstrB extends MCInstr{
         return ret;
     }
 
+    @Override
+    public void allocate(Reg vReg, PReg pReg) {
+        if (s == vReg) {
+            s = pReg;
+        }
+        if (t == vReg) {
+            t = pReg;
+        }
+    }
+
     public enum Type{
         beq,
         bgez,
@@ -45,9 +56,9 @@ public class MCInstrB extends MCInstr{
     @Override
     public String toString() {
         if (t != null) {
-            return String.format("%s %s,%s,%s", type, s,t,target);
+            return String.format("%s %s,%s,%s", type, s,t,target.label.name);
         } else {
-            return String.format("%s %s,%s", type,s,target);
+            return String.format("%s %s,%s", type,s,target.label.name);
         }
 
     }

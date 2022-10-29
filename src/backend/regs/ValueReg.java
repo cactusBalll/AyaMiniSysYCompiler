@@ -11,4 +11,9 @@ public class ValueReg extends Reg{
     public ValueReg(Value value) {
         this.value = value;
     }
+
+    @Override
+    public String toString() {
+        return String.format("$Val(%s)", value);
+    }
 }

@@ -31,5 +31,8 @@ public class MCJal extends MCInstr{
         return null;
     }
 
+    @Override
+    public void allocate(Reg vReg, PReg pReg) {
 
+    }
 }

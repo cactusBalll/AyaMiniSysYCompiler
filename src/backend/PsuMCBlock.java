@@ -1,5 +1,6 @@
 package backend;
 
+import backend.instr.Label;
 import ir.value.BasicBlock;
 
 /**
@@ -10,5 +11,11 @@ public class PsuMCBlock extends MCBlock{
 
     public PsuMCBlock(BasicBlock basicBlock) {
         this.basicBlock = basicBlock;
+        this.label = new Label("Pseudo",null);
+    }
+
+    @Override
+    public String toString() {
+        return "PsuMCBlock";
     }
 }

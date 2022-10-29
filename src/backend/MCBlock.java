@@ -2,6 +2,7 @@ package backend;
 
 import backend.instr.Label;
 import backend.instr.MCInstr;
+import backend.instr.MCStack;
 import backend.regs.Reg;
 import util.MyList;
 import util.MyNode;
@@ -13,7 +14,7 @@ import java.util.Set;
 
 public class MCBlock {
     public Label label;
-    public MyList<MCInstr> list;
+    public MyList<MCInstr> list = new MyList<>();
 
     public List<MCBlock> prec = new ArrayList<>();
     public List<MCBlock> succ = new ArrayList<>();
@@ -23,10 +24,12 @@ public class MCBlock {
     public Set<Reg> def = new HashSet<>();
     public Set<Reg> use = new HashSet<>();
 
+
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append(label).append(':');
+        sb.append(label).append('\n');
         for (MyNode<MCInstr> instrNode :
                 list) {
             MCInstr instr = instrNode.getValue();

@@ -1,6 +1,7 @@
 package backend.instr;
 
 import backend.MCBlock;
+import backend.regs.PReg;
 import backend.regs.Reg;
 
 import java.util.Set;
@@ -14,8 +15,11 @@ public class MCJ extends MCInstr{
 
     @Override
     public String toString() {
-        return 'j' + ' ' + target.label.toString();
+        return "j "+ target.label.name;
     }
 
+    @Override
+    public void allocate(Reg vReg, PReg pReg) {
 
+    }
 }

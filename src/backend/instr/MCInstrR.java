@@ -1,5 +1,6 @@
 package backend.instr;
 
+import backend.regs.PReg;
 import backend.regs.Reg;
 
 import java.util.HashSet;
@@ -25,6 +26,19 @@ public class MCInstrR extends MCInstr {
         ret.add(s);
         ret.add(t);
         return ret;
+    }
+
+    @Override
+    public void allocate(Reg vReg, PReg pReg) {
+        if (s == vReg) {
+            s = pReg;
+        }
+        if (t == vReg) {
+            t = pReg;
+        }
+        if (d == vReg) {
+            d = pReg;
+        }
     }
 
     public enum Type {

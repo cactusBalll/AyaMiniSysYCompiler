@@ -99,6 +99,7 @@ public class CodeGen {
     }
     private void genFunction(Function f) throws BackEndErr {
         mcFunction = new MCFunction();
+        mcFunction.label = new Label(f.getName(), null);
         mcUnit.list.add(mcFunction.getNode());
         value2Reg.clear();
         value2StackArr.clear();
@@ -132,6 +133,9 @@ public class CodeGen {
                 value2Reg.put(p, r);
             }
         }
+        MCStack push = new MCStack(0);
+        b.list.add(push.getNode());
+        mcFunction.push = push;
         List<Reg> calleeSaved = new ArrayList<>();
         for (int i = 0; i < 8; i++) {
             Reg r = VReg.alloc();
@@ -154,13 +158,19 @@ public class CodeGen {
 
             }
         }
-        
+
+        mcFunction.stackTop = stackSlot;
         stackSlot += f.getParams().size();
         mcFunction.stackSlot = stackSlot;
-        mcFunction.regAllocated = VReg.getAllocateCounter();
         //这时还没有生成处理栈的指令，因为部分虚拟寄存器应该分配到栈上，而实际上还没有寄存器分配
         //这时的stackSlot只包括局部数组ra和参数
         mappingReplace();
+        destructPhi();
+        mcFunction.regAllocated = VReg.getAllocateCounter();
+        if (f.getName().equals("main")) {
+            mcFunction.getNode().removeMe();
+            mcUnit.list.addFirst(mcFunction.getNode());
+        }
     }
 
     /**
@@ -263,7 +273,7 @@ public class CodeGen {
              mcFunction.list.toList()) {
             Map<MCBlock, MCParallelCopy> bb2pc = new HashMap<>();
             for (MCBlock precBB :
-                    mcbb.prec) {
+                    new ArrayList<>(mcbb.prec)) {
                 MCParallelCopy pc = new MCParallelCopy();
                 if (precBB.succ.size() > 1) {
                     MCBlock newBB = getBlock();
@@ -737,10 +747,22 @@ public class CodeGen {
                     );
                     mcbb.list.add(mcInstr1.getNode());
                 } // 恢复被调用者保护寄存器
-                MCInstr mcInstr = new MCMove(
-                        PReg.getRegByName("v0"),
-                        new ValueReg(((RetInstr) instr).getRetValue())
-                );
+                MCStack pop = new MCStack(0);
+                mcbb.list.add(pop.getNode());
+                mcFunction.pop = pop;
+                MCInstr mcInstr;
+                if (((RetInstr) instr).getRetValue() instanceof InitVal) {
+                    mcInstr = new MCLi(
+                            ((InitVal) ((RetInstr) instr).getRetValue()).getValue(),
+                            PReg.getRegByName("v0")
+                    );
+                } else {
+                    mcInstr = new MCMove(
+                            PReg.getRegByName("v0"),
+                            new ValueReg(((RetInstr) instr).getRetValue())
+                    );
+                }
+
                 MCInstr mcInstr1 = new MCJr(
                         PReg.getRegByName("ra")
                 );

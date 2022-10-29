@@ -1,5 +1,6 @@
 package backend.instr;
 
+import backend.regs.PReg;
 import backend.regs.Reg;
 
 import java.util.HashSet;
@@ -35,5 +36,15 @@ public class MCMove extends MCInstr{
         Set<Reg> ret = new HashSet<>();
         ret.add(d);
         return ret;
+    }
+
+    @Override
+    public void allocate(Reg vReg, PReg pReg) {
+        if (vReg == s) {
+            s = pReg;
+        }
+        if (vReg == d) {
+            d = pReg;
+        }
     }
 }

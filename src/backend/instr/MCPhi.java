@@ -2,6 +2,7 @@ package backend.instr;
 
 import backend.MCBlock;
 import backend.PsuMCBlock;
+import backend.regs.PReg;
 import backend.regs.Reg;
 import backend.regs.ValueReg;
 import ir.instruction.PhiInstr;
@@ -21,7 +22,9 @@ public class MCPhi extends MCInstr{
 
     public static MCPhi fromPhi(PhiInstr phiInstr) {
         return new MCPhi(
-                phiInstr.getPhiPairs().stream().map(p -> new Pair(new ValueReg(p.getFirst()), new PsuMCBlock(p.getLast()))).collect(Collectors.toList()),
+                phiInstr.getPhiPairs().stream().map(
+                        p -> new Pair<Reg,MCBlock>(new ValueReg(p.getFirst()), new PsuMCBlock(p.getLast()))).
+                        collect(Collectors.toList()),
                 new ValueReg(phiInstr)
         );
     }
@@ -46,5 +49,21 @@ public class MCPhi extends MCInstr{
             ret.add(p.getFirst());
         }
         return ret;
+    }
+
+    @Override
+    public void allocate(Reg vReg, PReg pReg) {
+
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(dest).append(" = phi");
+        for (Pair<Reg, MCBlock> p :
+                pairs) {
+            sb.append(" [").append(p.getFirst()).append(",").append(p.getLast().label.name).append("],");
+        }
+        return sb.toString();
     }
 }

@@ -27,4 +27,9 @@ public class MCSyscall extends MCInstr{
         }
         return ret;
     }
+
+    @Override
+    public void allocate(Reg vReg, PReg pReg) {
+
+    }
 }

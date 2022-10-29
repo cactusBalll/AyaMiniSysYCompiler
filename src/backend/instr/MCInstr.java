@@ -1,5 +1,6 @@
 package backend.instr;
 
+import backend.regs.PReg;
 import backend.regs.Reg;
 import util.MyNode;
 
@@ -18,4 +19,6 @@ public abstract class MCInstr {
     public MyNode getNode() {
         return node;
     }
+
+    public abstract void allocate(Reg vReg, PReg pReg);
 }

@@ -1,5 +1,6 @@
 package backend.instr;
 
+import backend.regs.PReg;
 import backend.regs.Reg;
 
 import java.util.HashSet;
@@ -61,5 +62,15 @@ public class MCLw extends MCInstr{
         Set<Reg> ret = new HashSet<>();
         ret.add(s);
         return ret;
+    }
+
+    @Override
+    public void allocate(Reg vReg, PReg pReg) {
+        if (s == vReg) {
+            s = pReg;
+        }
+        if (t == vReg) {
+            t = pReg;
+        }
     }
 }
