@@ -25,7 +25,7 @@ public class MCPhi extends MCInstr{
                 phiInstr.getPhiPairs().stream().map(
                         p -> new Pair<Reg,MCBlock>(new ValueReg(p.getFirst()), new PsuMCBlock(p.getLast()))).
                         collect(Collectors.toList()),
-                new ValueReg(phiInstr)
+                null
         );
     }
     

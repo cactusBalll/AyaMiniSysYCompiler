@@ -6,6 +6,7 @@ import util.MyList;
 import util.MyNode;
 
 public class MCUnit {
+    public MyList<MCInstr> prelude = new MyList<>(); //在main之前执行，如准备栈环境
     public MyList<MCData> data = new MyList<>();
     public MyList<MCFunction> list = new MyList<>();
 
@@ -29,6 +30,10 @@ public class MCUnit {
                 sb.append(d.getValue().toString()).append('\n');
             }
             sb.append(".text\n");
+        }
+        for (MyNode<MCInstr> instrNode :
+                prelude) {
+            sb.append('\t').append(instrNode.getValue()).append('\n');
         }
         for (MyNode<MCFunction> blockNode :
                 list) {

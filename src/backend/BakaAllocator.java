@@ -48,8 +48,8 @@ public class BakaAllocator {
                         uses) {
                     if (r instanceof VReg) {
                         MCLw load = new MCLw(
-                                PReg.getRegById(t.id + cnt),
                                 PReg.getRegByName("sp"),
+                                PReg.getRegById(t.id + cnt),
                                 ((VReg) r).id * 4 + mcFunction.stackTop * 4
                         );
                         instr.allocate(r, PReg.getRegById(t.id + cnt));
@@ -61,12 +61,12 @@ public class BakaAllocator {
                     Reg def = instr.getDef().iterator().next();
                     if (def instanceof VReg) {
                         MCSw store = new MCSw(
-                                d,
                                 PReg.getRegByName("sp"),
+                                d,
                                 ((VReg) def).id * 4 + mcFunction.stackTop * 4
                         );
                         instr.allocate(def, d);
-                        instr.getNode().insertBefore(store.getNode());
+                        instr.getNode().insertAfter(store.getNode());
                     }
                 }
             }

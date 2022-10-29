@@ -47,9 +47,10 @@ public class CodeGen {
     public MCUnit run() throws BackEndErr {
 
         //init stack
-        MCSpace space1 = new MCSpace(new Label("stack", null), AyaConfig.STACK_SIZE);
-        mcUnit.data.add(space1.getNode());
-
+        //MCSpace space1 = new MCSpace(new Label("stack", null), AyaConfig.STACK_SIZE);
+        //mcUnit.data.add(space1.getNode());
+        //MCStack mcStack = new MCStack(AyaConfig.STACK_SIZE);
+        //mcUnit.prelude.add(mcStack.getNode());
         for (MyNode<AllocInstr> allocNode :
                 compUnit.getGlobalValueList()) {
             AllocInstr alloc = allocNode.getValue();
@@ -275,7 +276,7 @@ public class CodeGen {
             for (MCBlock precBB :
                     new ArrayList<>(mcbb.prec)) {
                 MCParallelCopy pc = new MCParallelCopy();
-                if (precBB.succ.size() > 1) {
+                if (mcbb.prec.size() > 1 && precBB.succ.size() > 1) {
                     MCBlock newBB = getBlock();
                     precBB.succ.remove(mcbb);
                     precBB.succ.add(newBB);
@@ -293,7 +294,11 @@ public class CodeGen {
                     mcbb.getNode().insertAfter(newBB.getNode());
                     bb2pc.put(newBB,pc);
                 } else {
-                    precBB.list.addLast(pc.getNode());
+                    MyNode<MCInstr> last = precBB.list.getLast();
+                    while (last.getValue() instanceof MCJ || last.getValue() instanceof MCInstrB) {
+                        last = last.getPrev();
+                    }
+                    last.insertAfter(pc.getNode());
                     bb2pc.put(precBB,pc);
                 }
 
@@ -309,6 +314,7 @@ public class CodeGen {
                                 new Pair<>(phi.dest, p.getFirst())
                         );
                     }
+                    phi.getNode().removeMe();
                 }
             }
         }
@@ -330,6 +336,7 @@ public class CodeGen {
                         if (s.isPresent()) {
                             Pair<Reg, Reg> pair = s.get();
                             seq.add(new MCMove(pair.getFirst(), pair.getLast()));
+                            pcopy.copies.remove(pair);
                         } else {
                             Pair<Reg, Reg> pair = pcopy.copies.stream().filter(
                                     p -> p.getFirst() != p.getLast()
@@ -465,9 +472,14 @@ public class CodeGen {
                             PReg.getRegByName("v0")
                     );
                     MCSyscall syscall = new MCSyscall();
+                    MCInstr mcInstr1 = new MCMove(
+                            vReg,
+                            PReg.getRegByName("v0")
+                    );
                     syscall.mayModify = true;
                     mcbb.list.add(mcInstr.getNode());
                     mcbb.list.add(syscall.getNode());
+                    mcbb.list.add(mcInstr1.getNode());
                     value2Reg.put(instr,vReg);
                 } else if (((BuiltinCallInstr) instr).getFunc() == BuiltinCallInstr.Func.PutInt) {
                     if (((BuiltinCallInstr) instr).getParam() instanceof InitVal) {
@@ -735,10 +747,15 @@ public class CodeGen {
                 }
             } else if (instr instanceof PhiInstr) {
                 VReg vReg = VReg.alloc();
-                MCInstr phi = MCPhi.fromPhi((PhiInstr) instr);
+                MCPhi phi = MCPhi.fromPhi((PhiInstr) instr);
+                phi.dest = vReg;
                 mcbb.list.add(phi.getNode());
                 value2Reg.put(instr, vReg);
             } else if (instr instanceof RetInstr) {
+                if (mcFunction.label.name.equals("main")) {
+                    mcFunction.pop = new MCStack(0);
+                    continue;
+                } //用MARS运行，不要给main生成返回语句
                 for (int i = 0; i < calleeSaved.size(); i++) {
                     Reg r = calleeSaved.get(i);
                     MCInstr mcInstr1 = new MCMove(
