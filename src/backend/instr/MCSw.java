@@ -39,9 +39,9 @@ public class MCSw extends MCInstr{
     public String toString() {
         if (offset != null) {
             if (numOffset == 0) {
-                return String.format("sw %s,%s(%s)",t,offset,s);
+                return String.format("sw %s,%s(%s)",t,offset.name,s);
             } else {
-                return String.format("sw %s,%s+%d(%s)",t,offset,numOffset,s);
+                return String.format("sw %s,%s+%d(%s)",t,offset.name,numOffset,s);
             }
         } else {
             return String.format("sw %s,%d(%s)",t,numOffset,s);

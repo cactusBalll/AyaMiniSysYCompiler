@@ -17,7 +17,7 @@ public class MCJal extends MCInstr{
 
     @Override
     public String toString() {
-        return "jal" + ' ' + target.label.toString();
+        return "jal" + ' ' + target.label.name;
     }
 
     @Override
@@ -28,7 +28,7 @@ public class MCJal extends MCInstr{
         } catch (BackEndErr e) {
             throw new RuntimeException(e);
         }
-        return null;
+        return ret;
     }
 
     @Override

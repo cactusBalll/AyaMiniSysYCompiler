@@ -15,6 +15,8 @@ public class MCLw extends MCInstr{
     public Label offset;
     public int numOffset = 0;
 
+    public boolean isLoadArg = false; // 是否是在加载参数
+
     public MCLw(Reg s, Reg t, Label offset) {
         this.s = s;
         this.t = t;
@@ -39,9 +41,9 @@ public class MCLw extends MCInstr{
     public String toString() {
         if (offset != null) {
             if (numOffset == 0) {
-                return String.format("lw %s,%s(%s)",t,offset,s);
+                return String.format("lw %s,%s(%s)",t,offset.name,s);
             } else {
-                return String.format("lw %s,%s+%d(%s)",t,offset,numOffset,s);
+                return String.format("lw %s,%s+%d(%s)",t,offset.name,numOffset,s);
             }
 
         } else {

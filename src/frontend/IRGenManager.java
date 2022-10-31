@@ -9,10 +9,13 @@ import ty.Ty;
 import util.Pair;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class IRGenManager {
     private final CompUnit compUnit = new CompUnit();
+    private final Set<String> usedGlobalName = new HashSet<>();
 
     private final List<Pair<BasicBlock,BasicBlock>> loopBB = new ArrayList<>(); // 用于break和continue
 
@@ -102,7 +105,17 @@ public class IRGenManager {
     }
     public AllocInstr genStaticData(Ty type, Constant initVal, String name) {
         AllocInstr allocInstr = new AllocInstr(type, AllocInstr.AllocType.Static, initVal);
-        allocInstr.setName(name);
+        String n = name + "_";
+        if (usedGlobalName.contains(n)) {
+            int i = 0;
+            while (usedGlobalName.contains(n+i)) {
+                i++;
+            }
+            usedGlobalName.add(n+i);
+            n = n + i;
+        }
+        usedGlobalName.add(n);
+        allocInstr.setName(n);
         compUnit.addGlobalValue(allocInstr);
         return allocInstr;
     }
@@ -110,6 +123,9 @@ public class IRGenManager {
     public AllocInstr genStackData(Ty type, Value value) {
         AllocInstr allocInstr = new AllocInstr(type, AllocInstr.AllocType.Stack, null);
         StoreInstr init = new StoreInstr(allocInstr, value, InitVal.buildInitVal(0));
+        //mem2reg的要求，变量必须先初始化（为0）
+        StoreInstr hoist = new StoreInstr(allocInstr, InitVal.buildInitVal(0), InitVal.buildInitVal(0));
+        nwFunction.getFirstBB().addInstrAtFirst(hoist);
         nwFunction.getFirstBB().addInstrAtFirst(allocInstr);
         nwBlock.addInstr(init);
         return allocInstr;

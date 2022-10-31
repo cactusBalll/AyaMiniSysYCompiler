@@ -9,6 +9,9 @@ import backend.regs.VReg;
 import exceptions.BackEndErr;
 import util.MyNode;
 
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -32,7 +35,7 @@ public class BakaAllocator {
     public void runOnFunction(MCFunction mcFunction) throws BackEndErr {
         // 虚拟寄存器全部栈上分配
         mcFunction.stackSlot += mcFunction.regAllocated;
-        mcFunction.push.offset = mcFunction.stackSlot * 4;
+        mcFunction.push.offset = -mcFunction.stackSlot * 4;
         mcFunction.pop.offset = mcFunction.stackSlot * 4;
         PReg d = PReg.getRegByName("t0");
         PReg t = PReg.getRegByName("t1");
@@ -42,32 +45,45 @@ public class BakaAllocator {
             MCBlock bb = bbNode.getValue();
             for (MCInstr instr :
                     bb.list.toList()) {
+                if (instr instanceof MCLw && ((MCLw) instr).isLoadArg) {
+                    ((MCLw) instr).numOffset += mcFunction.stackSlot * 4;
+                }
                 Set<Reg> uses = instr.getUse();
+                Set<Reg> def = instr.getDef();
+                Set<Reg> all = new HashSet<>(def);
+                all.addAll(uses);
+                Map<VReg, PReg> mapper = new HashMap<>();
+
                 int cnt = 0;
                 for (Reg r :
-                        uses) {
+                        all) {
                     if (r instanceof VReg) {
-                        MCLw load = new MCLw(
-                                PReg.getRegByName("sp"),
-                                PReg.getRegById(t.id + cnt),
-                                ((VReg) r).id * 4 + mcFunction.stackTop * 4
-                        );
-                        instr.allocate(r, PReg.getRegById(t.id + cnt));
-                        instr.getNode().insertBefore(load.getNode());
+                        mapper.put((VReg) r, PReg.getRegById(t.id + cnt));
                         cnt++;
                     }
                 }
-                if (instr.getDef().size() == 1) {
-                    Reg def = instr.getDef().iterator().next();
-                    if (def instanceof VReg) {
+                for (Map.Entry<VReg, PReg> p :
+                        mapper.entrySet()) {
+                    if (uses.contains(p.getKey())) {
+                        MCLw load = new MCLw(
+                                PReg.getRegByName("sp"),
+                                p.getValue(),
+                                (p.getKey()).id * 4 + mcFunction.stackTop * 4
+                        );
+                        instr.getNode().insertBefore(load.getNode());
+                    }
+                    if (def.contains(p.getKey())) {
                         MCSw store = new MCSw(
                                 PReg.getRegByName("sp"),
-                                d,
-                                ((VReg) def).id * 4 + mcFunction.stackTop * 4
+                                p.getValue(),
+                                (p.getKey()).id * 4 + mcFunction.stackTop * 4
                         );
-                        instr.allocate(def, d);
                         instr.getNode().insertAfter(store.getNode());
                     }
+                }
+                for (Map.Entry<VReg, PReg> p :
+                        mapper.entrySet()) {
+                    instr.allocate(p.getKey(),p.getValue());
                 }
             }
         }

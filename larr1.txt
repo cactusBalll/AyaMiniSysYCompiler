@@ -1,0 +1,13 @@
+void func(int a[]) {
+    int i = 0;
+    while(i < 5) {
+        printf("%d\n", a[i]);
+        i = i + 1;
+    }
+}
+
+int main(){
+    int a[5] = {1,2,3,4,5};
+    func(a);
+    return 0;
+}

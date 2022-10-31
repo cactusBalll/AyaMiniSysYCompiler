@@ -76,7 +76,7 @@ public class MCInstrR extends MCInstr {
         if (d != null) {
             return type.toString() + ' ' + d.toString() + ',' + s.toString() + ',' + t.toString();
         } else {
-            return type.toString() + ' ' + ',' + s.toString() + ',' + t.toString();
+            return type.toString() + ' ' + s.toString() + ',' + t.toString();
         }
     }
 }

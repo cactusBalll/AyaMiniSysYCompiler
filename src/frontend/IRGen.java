@@ -371,7 +371,7 @@ public class IRGen {
                 } else if (TreeNode.match(rel, 1, Token.Type.LEQ) != null) {
                     int t = ((InitVal) v1).getValue() <= ((InitVal) v2).getValue()?1:0;
                     return InitVal.buildInitVal(t);
-                } else if (TreeNode.match(rel, 1, Token.Type.GRE) != null) {
+                } else if (TreeNode.match(rel, 1, Token.Type.GEQ) != null) {
                     int t = ((InitVal) v1).getValue() >= ((InitVal) v2).getValue()?1:0;
                     return InitVal.buildInitVal(t);
                 } else {
@@ -466,8 +466,9 @@ public class IRGen {
                         AllocInstr allocInstr = irGenManager.genStackData(ty, InitVal.buildInitVal(0));
                         symbolTable.putVarOrGenErr(t.getToken().getText(), allocInstr, t.getToken().getLine());
                     } else {
-                        symbolTable.putConstOrGenErr(
-                                t.getToken().getText(), new Constant(ty, 0), t.getToken().getLine());
+                       AllocInstr allocInstr = irGenManager.genStaticData(
+                                ty, new Constant(ty, 0), t.getToken().getText());
+                       symbolTable.putVarOrGenErr(t.getToken().getText(), allocInstr, t.getToken().getLine());
                     }
                 } else {
                     AllocInstr allocInstr;
@@ -772,7 +773,11 @@ public class IRGen {
                         return irGenManager.genLoadInstr(varElem.getAlloc(), InitVal.buildInitVal(0));
                     }
                 } else if (varElem.getEn() == VarElem.En.Param) {
-                    return varElem.getParam();
+                    if (varElem.getParam().getType() instanceof  IntArrTy) {
+                        return varElem.getParam();
+                    } else {
+                        return irGenManager.genLoadInstr(varElem.getParam(), InitVal.buildInitVal(0));
+                    }
                 } else {
                     return InitVal.buildInitVal(0);
                 }

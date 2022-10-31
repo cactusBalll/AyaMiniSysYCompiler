@@ -1,5 +1,6 @@
 package ir.instruction;
 
+import ir.value.InitVal;
 import ir.value.User;
 import ir.value.Value;
 import ty.Ty;
@@ -8,7 +9,7 @@ import util.MyNode;
 import java.util.ArrayList;
 import java.util.LinkedList;
 
-public class BinaryOp extends Instr{
+public class BinaryOp extends Instr {
     private OpType opType;
 
     public OpType getOpType() {
@@ -22,7 +23,8 @@ public class BinaryOp extends Instr{
     public Value getRight() {
         return uses.get(1).getValue();
     }
-    public enum OpType{
+
+    public enum OpType {
         Add,
         Sub,
         Mul,
@@ -36,12 +38,49 @@ public class BinaryOp extends Instr{
         Sne,
         Not, // MIPS用XOR实现非
     }
+
+    public Integer evaluate() {
+        if (!(getLeft() instanceof InitVal) || !(getRight() instanceof InitVal)) {
+            return null;
+        }
+        int left = ((InitVal) getLeft()).getValue();
+        int right = ((InitVal) getRight()).getValue();
+        switch (opType) {
+            case Slt:
+                return left < right ? 1 : 0;
+            case Not:
+                return right != 0 ? 0 : 1;
+            case Sle:
+                return left <= right ? 1 : 0;
+            case Sge:
+                return left >= right ? 1 : 0;
+            case Sne:
+                return left != right ? 1 : 0;
+            case Seq:
+                return left == right ? 1 : 0;
+            case Mod:
+                return left % right;
+            case Div:
+                return left / right;
+            case Mul:
+                return left * right;
+            case Sub:
+                return left - right;
+            case Add:
+                return left + right;
+            case Sgt:
+                return left > right ? 1 : 0;
+        }
+        return null;
+    }
+
     public BinaryOp(OpType opType, Value left, Value right) {
         super(new LinkedList<>(), new ArrayList<>());
         this.opType = opType;
         uses.add(left.getNode());
         uses.add(right.getNode());
     }
+
     public BinaryOp(LinkedList<MyNode<User>> users, ArrayList<Value> uses) {
         super(users, uses);
     }

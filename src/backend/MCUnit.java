@@ -1,5 +1,6 @@
 package backend;
 
+import backend.instr.Label;
 import backend.instr.MCData;
 import backend.instr.MCInstr;
 import util.MyList;
@@ -9,6 +10,11 @@ public class MCUnit {
     public MyList<MCInstr> prelude = new MyList<>(); //在main之前执行，如准备栈环境
     public MyList<MCData> data = new MyList<>();
     public MyList<MCFunction> list = new MyList<>();
+    public MCBlock endProg = new MCBlock();
+
+    public MCUnit() {
+        endProg.label = Label.getLabel(endProg);
+    }
 
     public MCData getDataByName(String name) {
         for (MyNode<MCData> d :
@@ -40,6 +46,7 @@ public class MCUnit {
             MCFunction block = blockNode.getValue();
             sb.append(block.toString());
         }
+        sb.append(endProg).append('\n');
         return sb.toString();
     }
 }

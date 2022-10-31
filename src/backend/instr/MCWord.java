@@ -12,7 +12,7 @@ public class MCWord extends MCData{
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append(label.name).append(" .word ");
+        sb.append(label).append(" .word ");
         for (int word :
                 words) {
             sb.append(word).append(',');

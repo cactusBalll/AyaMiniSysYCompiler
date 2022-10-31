@@ -49,7 +49,10 @@ public class CompUnit {
             }
         }
     }
-
+    public void fullMaintain() {
+        maintainUser();
+        maintainBBelong();
+    }
     public void maintainUser() {
         for (MyNode<Function> funcNode :
                 list) {
