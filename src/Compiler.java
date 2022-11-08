@@ -1,6 +1,7 @@
 import backend.BakaAllocator;
 import backend.CodeGen;
 import backend.MCUnit;
+import backend.coloralloc.ColorAllocDriver;
 import exceptions.BackEndErr;
 import exceptions.IRGenErr;
 import exceptions.LexErr;
@@ -14,12 +15,12 @@ import java.io.*;
 import java.util.List;
 
 public class Compiler {
-    public static void main(String[] argv) throws IOException {
+    public static void main(String[] argv) throws Exception {
 
         try {
             emitMIPS(argv[0],argv[1]);
             //emitMIPSSubmit();
-        } catch (LexErr|ParseErr|IRGenErr|BackEndErr e) {
+        } catch (LexErr|ParseErr|IRGenErr e) {
             System.out.println("error occurred");
         }
     }
@@ -64,11 +65,17 @@ public class Compiler {
             new SimpleCP().run(compUnit);
 
             compUnit.fullMaintain();
+            new PrecSucc().run(compUnit);
+            new BBInfo().run(compUnit);
+            new GVNGCM().run(compUnit);
 
+            compUnit.setValueName();
             CodeGen codeGen = new CodeGen(compUnit);
             MCUnit mcUnit = codeGen.run();
-            BakaAllocator bakaAllocator = new BakaAllocator(mcUnit);
-            bakaAllocator.run();
+            //BakaAllocator bakaAllocator = new BakaAllocator(mcUnit);
+            //bakaAllocator.run();
+
+            ColorAllocDriver.run(mcUnit);
             out = new PrintStream(MIPSTarget);
             System.setOut(out);
             System.out.print(mcUnit);
@@ -114,14 +121,18 @@ public class Compiler {
             new SimpleCP().run(compUnit);
 
             compUnit.fullMaintain();
+            new PrecSucc().run(compUnit);
+            new BBInfo().run(compUnit);
+            new GVNGCM().run(compUnit);
 
             compUnit.setValueName();
             System.out.print(compUnit);
 
             CodeGen codeGen = new CodeGen(compUnit);
             MCUnit mcUnit = codeGen.run();
-            BakaAllocator bakaAllocator = new BakaAllocator(mcUnit);
-            bakaAllocator.run();
+            //BakaAllocator bakaAllocator = new BakaAllocator(mcUnit);
+            //bakaAllocator.run();
+            ColorAllocDriver.run(mcUnit);
             out = new PrintStream(MIPSTarget);
             System.setOut(out);
             System.out.print(mcUnit);

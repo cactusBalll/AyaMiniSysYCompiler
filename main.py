@@ -27,15 +27,16 @@ def compile_jar():
     os.system(f"jar -cfm .\\tr_tmp\\compiler.jar .\\MANIFEST.MF -C .\\tr_tmp\\classes .")
 
 
-test_path = [R'testsuit2022\full\A', R'testsuit2022\full\B', R'testsuit2022\full\C']
-#test_path = [R'testsuit2022\full\C']
+test_path = [(R'testsuit2022\full\A',30), (R'testsuit2022\full\B',30), (R'testsuit2022\full\C',30),(R'testsuit2022\full\shj',93)]
+#test_path = [(R'testsuit2022\full\C',30)]
+#test_path = [(R'testsuit2022\full\shj',93)]
 mars_path = R'C:\Users\11067\.jdks\corretto-15.0.2\bin\java.exe -jar ..\Mars.jar mc Default me nc .\tr_tmp\mips.txt'
 
 
 def run():
-    for base_path in test_path:
+    for (base_path,num) in test_path:
         base_path = os.path.abspath(base_path)
-        for i in range(1, 31):
+        for i in range(1, num+1):
             file_path = os.path.join(base_path, f'testfile{i}.txt')
 
             if not os.path.exists(file_path):
@@ -56,7 +57,7 @@ def run():
                     return
             d = difflib.Differ()
             with open('tr_tmp\\ans.txt', 'r', encoding='utf-8') as f_me, open(out_path, 'r', encoding='utf-8') as f_std:
-
+ 
                 me = f_me.read().strip()
                 stdd = f_std.read().strip()
                 if me != stdd:
@@ -71,3 +72,4 @@ clr()
 compile_jar()
 run()
 
+R"java -jar -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5005 .\tr_tmp\compiler.jar testsuit2022\full\shj\testfile5.txt  tr_tmp\mips.txt"

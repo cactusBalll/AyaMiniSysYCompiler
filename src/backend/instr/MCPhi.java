@@ -52,7 +52,7 @@ public class MCPhi extends MCInstr{
     }
 
     @Override
-    public void allocate(Reg vReg, PReg pReg) {
+    public void allocate(Reg vReg, Reg pReg) {
 
     }
 

@@ -2,6 +2,7 @@ package backend;
 
 import backend.instr.MCInstr;
 import backend.instr.MCLw;
+import backend.instr.MCNop;
 import backend.instr.MCSw;
 import backend.regs.PReg;
 import backend.regs.Reg;
@@ -45,6 +46,9 @@ public class BakaAllocator {
             MCBlock bb = bbNode.getValue();
             for (MCInstr instr :
                     bb.list.toList()) {
+                if (instr instanceof MCNop) {
+                    continue;
+                }
                 if (instr instanceof MCLw && ((MCLw) instr).isLoadArg) {
                     ((MCLw) instr).numOffset += mcFunction.stackSlot * 4;
                 }

@@ -8,6 +8,7 @@ import util.MyNode;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.Objects;
 
 public class BinaryOp extends Instr {
     private OpType opType;
@@ -105,5 +106,35 @@ public class BinaryOp extends Instr {
                 .append(' ').append(getLeft().getName())
                 .append(',').append(getRight().getName());
         return sb.toString();
+    }
+
+    public class Wrapper{
+        private BinaryOp owner;
+
+        public Wrapper(BinaryOp owner) {
+            this.owner = owner;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(getLeft(),getRight(),opType);
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (!(obj instanceof Wrapper)) {
+                return false;
+            }
+            Wrapper wrapper = (Wrapper) obj;
+            return Objects.equals(owner.getLeft(),wrapper.owner.getLeft()) &&
+                    Objects.equals(owner.getRight(),wrapper.owner.getRight()) &&
+                    Objects.equals(owner.getOpType(), wrapper.owner.getOpType());
+        }
+    }
+
+    private final Wrapper wrapper = new Wrapper(this);
+
+    public Wrapper getWrapper() {
+        return wrapper;
     }
 }

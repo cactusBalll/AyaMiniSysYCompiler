@@ -19,7 +19,6 @@ public class MCJal extends MCInstr{
     public String toString() {
         return "jal" + ' ' + target.label.name;
     }
-
     @Override
     public Set<Reg> getDef() {
         Set<Reg> ret = new HashSet<>();
@@ -32,7 +31,7 @@ public class MCJal extends MCInstr{
     }
 
     @Override
-    public void allocate(Reg vReg, PReg pReg) {
+    public void allocate(Reg vReg, Reg pReg) {
 
     }
 }

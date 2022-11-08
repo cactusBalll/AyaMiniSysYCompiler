@@ -20,5 +20,5 @@ public abstract class MCInstr {
         return node;
     }
 
-    public abstract void allocate(Reg vReg, PReg pReg);
+    public abstract void allocate(Reg vReg, Reg pReg);
 }

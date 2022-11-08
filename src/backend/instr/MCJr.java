@@ -2,6 +2,7 @@ package backend.instr;
 
 import backend.regs.PReg;
 import backend.regs.Reg;
+import exceptions.BackEndErr;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -26,7 +27,7 @@ public class MCJr extends MCInstr{
     }
 
     @Override
-    public void allocate(Reg vReg, PReg pReg) {
+    public void allocate(Reg vReg, Reg pReg) {
         if (vReg == s) {
             s = pReg;
         }

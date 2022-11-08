@@ -39,7 +39,7 @@ public class MCMove extends MCInstr{
     }
 
     @Override
-    public void allocate(Reg vReg, PReg pReg) {
+    public void allocate(Reg vReg, Reg pReg) {
         if (vReg == s) {
             s = pReg;
         }

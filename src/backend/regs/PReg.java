@@ -3,9 +3,7 @@ package backend.regs;
 import Driver.AyaConfig;
 import exceptions.BackEndErr;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 public class PReg extends Reg{
     public String name;
@@ -52,7 +50,43 @@ public class PReg extends Reg{
             add(new PReg("ra", 31)); //reserved, only for jr $ra
         }
     };
+    public static Set<PReg> getSpRegs() {
+        Set<PReg> ret = new HashSet<>();
+        ret.add(regs.get(0));
+        ret.add(regs.get(1));
+        ret.add(regs.get(2));
+        ret.add(regs.get(29));
+        //ret.add(regs.get(30));
+        ret.add(regs.get(31));
+        return ret;
+    }
+    public static List<PReg> getTRegsWithoutAn() {
+        List<PReg> ret = getTRegs();
+        ret.remove(regs.get(4));
+        ret.remove(regs.get(5));
+        ret.remove(regs.get(6));
+        ret.remove(regs.get(7));
+        return ret;
+    }
 
+    public static List<PReg> getTRegs() {
+        List<PReg> ret = new ArrayList<>(regs);
+        ret.removeAll(getSpRegs());
+        return ret;
+    }
+
+    public static List<PReg> getLessTRegs() {
+        List<PReg> ret = new ArrayList<>();
+        ret.add(regs.get(4));
+        ret.add(regs.get(5));
+        ret.add(regs.get(6));
+        ret.add(regs.get(7));
+        ret.add(regs.get(8));
+        return ret;
+    }
+    public static List<PReg> getRegs() {
+        return regs;
+    }
     public static PReg getRegById(int id) throws BackEndErr {
         if (id < 0 || id > 31) {
             throw new BackEndErr();

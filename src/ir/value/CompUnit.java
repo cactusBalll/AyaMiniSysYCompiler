@@ -54,6 +54,7 @@ public class CompUnit {
         maintainBBelong();
     }
     public void maintainUser() {
+        forEveryInstr(instr -> instr.users.clear());
         for (MyNode<Function> funcNode :
                 list) {
             Function func = funcNode.getValue();

@@ -29,7 +29,22 @@ public class MCSyscall extends MCInstr{
     }
 
     @Override
-    public void allocate(Reg vReg, PReg pReg) {
+    public Set<Reg> getUse() {
+        Set<Reg> ret = new HashSet<>();
+        try {
+            ret.add(PReg.getRegByName("v0"));
+            if (!mayModify) { //putint & putstr
+                ret.add(PReg.getRegByName("a0"));
+            }
+
+        } catch (BackEndErr e) {
+            throw new RuntimeException(e);
+        }
+        return ret;
+    }
+
+    @Override
+    public void allocate(Reg vReg, Reg pReg) {
 
     }
 }

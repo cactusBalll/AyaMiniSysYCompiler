@@ -26,7 +26,7 @@ public class MCMfhi extends MCInstr{
     }
 
     @Override
-    public void allocate(Reg vReg, PReg pReg) {
+    public void allocate(Reg vReg, Reg pReg) {
         if (d == vReg) {
             d = pReg;
         }

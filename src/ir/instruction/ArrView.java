@@ -7,6 +7,7 @@ import util.MyNode;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.Objects;
 
 /**
  * ArrView: IntArrTy -> IntArrTy
@@ -50,5 +51,29 @@ public class ArrView extends Instr{
         sb.append(name).append(" = ");
         sb.append("arrView ").append(getArr().getName()).append(',').append(getIdx().getName());
         return sb.toString();
+    }
+
+    public class Wrapper{
+        private ArrView owner;
+
+        public Wrapper(ArrView owner) {
+            this.owner = owner;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (!(obj instanceof Wrapper)) {
+                return false;
+            }
+            Wrapper wrapper = (Wrapper) obj;
+            return Objects.equals(owner.getArr(), wrapper.owner.getArr()) &&
+                    Objects.equals(owner.getIdx(), wrapper.owner.getIdx());
+        }
+    }
+
+    private final Wrapper wrapper = new Wrapper(this);
+
+    public Wrapper getWrapper() {
+        return wrapper;
     }
 }
