@@ -90,11 +90,13 @@ public class CodeGen {
     }
 
     private int strCnt = 0;
+
     private Label getStrLabel() {
-        Label l = new Label("str"+strCnt, null);
+        Label l = new Label("str" + strCnt, null);
         strCnt++;
         return l;
     }
+
     private void genFunction(Function f) throws BackEndErr {
         mcFunction = new MCFunction();
         mcFunction.label = new Label(f.getName(), null);
@@ -146,7 +148,7 @@ public class CodeGen {
             for (int i = 4; i < f.getParams().size(); i++) {
                 Param p = f.getParams().get(i);
                 Reg r = VReg.alloc();
-                MCLw instr = new MCLw(PReg.getRegByName("sp"), r,  -i * 4-4);
+                MCLw instr = new MCLw(PReg.getRegByName("sp"), r, -i * 4 - 4);
                 instr.isLoadArg = true;
                 b.list.add(instr.getNode());
                 value2Reg.put(p, r);
@@ -159,7 +161,7 @@ public class CodeGen {
         //main 不需要保存被调用者保存寄存器
         //全部让callee保护
         if (!Objects.equals(mcFunction.label.name, "main")) {
-            for (PReg pr: tRegs) {
+            for (PReg pr : tRegs) {
                 Reg r = VReg.alloc();
                 MCMove instr = new MCMove(r, pr);
                 b.list.add(instr.getNode());
@@ -178,8 +180,9 @@ public class CodeGen {
                 genBlock(bb, b, calleeSaved, paramPassed, paramVReg);
             } else {
                 MCBlock mcBlock = getBlock();
+                mcBlock.loopDepth = bb.loopDepth; // 传递循环嵌套深度
                 bb2mcbb.put(bb, mcBlock);
-                mcbb2bb.put(mcBlock,bb);
+                mcbb2bb.put(mcBlock, bb);
                 genBlock(bb, mcBlock, calleeSaved, paramPassed, paramVReg);
                 mcFunction.list.add(mcBlock.getNode());
 
@@ -209,8 +212,8 @@ public class CodeGen {
                 mcFunction.list) {
             MCBlock mcbb = bbNode.getValue();
             BasicBlock bb = mcbb2bb.get(mcbb);
-            mcbb.prec.addAll(bb.prec.stream().map(b-> bb2mcbb.get(b)).collect(Collectors.toList()));
-            mcbb.succ.addAll(bb.succ.stream().map(b-> bb2mcbb.get(b)).collect(Collectors.toList()));
+            mcbb.prec.addAll(bb.prec.stream().map(b -> bb2mcbb.get(b)).collect(Collectors.toList()));
+            mcbb.succ.addAll(bb.succ.stream().map(b -> bb2mcbb.get(b)).collect(Collectors.toList()));
             for (MyNode<MCInstr> instrNode :
                     mcbb.list) {
                 MCInstr mcInstr = instrNode.getValue();
@@ -278,14 +281,14 @@ public class CodeGen {
                 }
                 if (mcInstr instanceof MCPhi) {
                     MCPhi mcPhi = (MCPhi) mcInstr;
-                    List<Pair<Reg,MCBlock>> pairs = new ArrayList<>();
+                    List<Pair<Reg, MCBlock>> pairs = new ArrayList<>();
                     for (Pair<Reg, MCBlock> pair :
                             mcPhi.pairs) {
-                        Pair<Reg,MCBlock> newPair = new Pair<>(
-                                ((ValueReg)pair.getFirst()).value instanceof InitVal?
-                                        pair.getFirst():
-                                        value2Reg.get(((ValueReg)pair.getFirst()).value),
-                                bb2mcbb.get(((PsuMCBlock)pair.getLast()).basicBlock)
+                        Pair<Reg, MCBlock> newPair = new Pair<>(
+                                ((ValueReg) pair.getFirst()).value instanceof InitVal ?
+                                        pair.getFirst() :
+                                        value2Reg.get(((ValueReg) pair.getFirst()).value),
+                                bb2mcbb.get(((PsuMCBlock) pair.getLast()).basicBlock)
                         );
                         pairs.add(newPair);
                     }
@@ -302,8 +305,8 @@ public class CodeGen {
      */
     public void destructPhi() {
         //拆分关键边
-        for (MCBlock mcbb:
-             mcFunction.list.toList()) {
+        for (MCBlock mcbb :
+                mcFunction.list.toList()) {
             Map<MCBlock, MCParallelCopy> bb2pc = new HashMap<>();
             for (MCBlock precBB :
                     new ArrayList<>(mcbb.prec)) {
@@ -324,7 +327,7 @@ public class CodeGen {
                     newBB.prec.add(precBB);
                     newBB.succ.add(mcbb);
                     mcbb.getNode().insertAfter(newBB.getNode());
-                    bb2pc.put(newBB,pc);
+                    bb2pc.put(newBB, pc);
                 } else {
                     MyNode<MCInstr> last = precBB.list.getLast();
                     while (last.getPrev() != null &&
@@ -333,7 +336,7 @@ public class CodeGen {
                         last = last.getPrev();
                     }
                     last.insertBefore(pc.getNode());
-                    bb2pc.put(precBB,pc);
+                    bb2pc.put(precBB, pc);
                 }
 
             }
@@ -352,7 +355,7 @@ public class CodeGen {
             }
         }
         //并行复制串行化
-        for (MyNode<MCBlock> mcbbNode:
+        for (MyNode<MCBlock> mcbbNode :
                 mcFunction.list) {
             MCBlock mcbb = mcbbNode.getValue();
             for (MCInstr mcInstr :
@@ -360,17 +363,17 @@ public class CodeGen {
                 if (mcInstr instanceof MCParallelCopy) {
                     MCParallelCopy pcopy = (MCParallelCopy) mcInstr;
                     List<MCInstr> seq = new ArrayList<>();
-                    while (!pcopy.copies.stream().allMatch(p-> p.getFirst() == p.getLast())) {
+                    while (!pcopy.copies.stream().allMatch(p -> p.getFirst() == p.getLast())) {
                         java.util.Optional<Pair<Reg, Reg>> s = pcopy.copies.stream().filter(
-                                        p -> p.getFirst()!=p.getLast() &&
+                                        p -> p.getFirst() != p.getLast() &&
                                                 pcopy.copies.stream().noneMatch(
-                                                    p1->p1.getLast() == p.getFirst()))
+                                                        p1 -> p1.getLast() == p.getFirst()))
                                 .findAny();
                         if (s.isPresent()) {
                             Pair<Reg, Reg> pair = s.get();
                             if (pair.getLast() instanceof ValueReg) {
                                 seq.add(new MCLi(
-                                        ((InitVal)((ValueReg) pair.getLast()).value).getValue(),
+                                        ((InitVal) ((ValueReg) pair.getLast()).value).getValue(),
                                         pair.getFirst())
                                 );
                             } else {
@@ -386,7 +389,7 @@ public class CodeGen {
                             VReg vReg = VReg.alloc();
                             if (pair.getLast() instanceof ValueReg) {
                                 seq.add(new MCLi(
-                                        ((InitVal)((ValueReg) pair.getLast()).value).getValue(),
+                                        ((InitVal) ((ValueReg) pair.getLast()).value).getValue(),
                                         vReg)
                                 );
                             } else {
@@ -408,15 +411,16 @@ public class CodeGen {
 
     /**
      * 替换跳转目标，用于关键边拆分
+     *
      * @param old
      * @param nnew
      */
-    private void replaceJumpTarget(MCBlock inWhich, MCBlock old,MCBlock nnew) {
+    private void replaceJumpTarget(MCBlock inWhich, MCBlock old, MCBlock nnew) {
         for (MyNode<MCInstr> instrNode :
                 inWhich.list) {
             MCInstr instr = instrNode.getValue();
             if (instr instanceof MCJ) {
-                MCJ mcj = (MCJ)instr;
+                MCJ mcj = (MCJ) instr;
                 if (mcj.target == old) {
                     mcj.target = nnew;
                 }
@@ -429,19 +433,19 @@ public class CodeGen {
             }
         }
     }
-    
+
     private void replacePhiBlock(MCBlock inWhich, MCBlock old, MCBlock nnew) {
         for (MyNode<MCInstr> instrNode :
                 inWhich.list) {
             MCInstr instr = instrNode.getValue();
             if (instr instanceof MCPhi) {
                 MCPhi phi = (MCPhi) instr;
-                List<Pair<Reg,MCBlock>> pairs = new ArrayList<>();
+                List<Pair<Reg, MCBlock>> pairs = new ArrayList<>();
                 for (Pair<Reg, MCBlock> p :
                         phi.pairs) {
-                    Pair<Reg,MCBlock> t;
+                    Pair<Reg, MCBlock> t;
                     if (p.getLast() == old) {
-                        t = new Pair<>(p.getFirst(),nnew);
+                        t = new Pair<>(p.getFirst(), nnew);
                     } else {
                         t = p;
                     }
@@ -451,6 +455,7 @@ public class CodeGen {
             }
         }
     }
+
     /**
      * 从SSA基本块向机器基本块生成代码
      *
@@ -482,7 +487,7 @@ public class CodeGen {
                         MCInstrI.Type.addu
                 );// 保存数组地址
                 mcbb.list.add(mcInstr.getNode());
-                value2Reg.put(instr,vReg);
+                value2Reg.put(instr, vReg);
             } else if (instr instanceof ArrView) {
                 VReg vReg = VReg.alloc();
                 MCInstr mcInstr;
@@ -547,7 +552,7 @@ public class CodeGen {
                 }
 
                 mcbb.list.add(mcInstr.getNode());
-                value2Reg.put(instr,vReg);
+                value2Reg.put(instr, vReg);
             } else if (instr instanceof BrInstr) {
                 if (((BrInstr) instr).getCond() instanceof InitVal) {
                     int cond = ((InitVal) ((BrInstr) instr).getCond()).getValue();
@@ -588,7 +593,7 @@ public class CodeGen {
                     mcbb.list.add(mcInstr.getNode());
                     mcbb.list.add(syscall.getNode());
                     mcbb.list.add(mcInstr1.getNode());
-                    value2Reg.put(instr,vReg);
+                    value2Reg.put(instr, vReg);
                 } else if (((BuiltinCallInstr) instr).getFunc() == BuiltinCallInstr.Func.PutInt) {
                     if (((BuiltinCallInstr) instr).getParam() instanceof InitVal) {
                         MCInstr li = new MCLi(
@@ -613,7 +618,7 @@ public class CodeGen {
                     mcbb.list.add(mcInstr.getNode());
                     mcbb.list.add(syscall.getNode());
                 } else if (((BuiltinCallInstr) instr).getFunc() == BuiltinCallInstr.Func.PutStr) {
-                    String str1 = ((MyString)((BuiltinCallInstr) instr).getParam()).getStr();
+                    String str1 = ((MyString) ((BuiltinCallInstr) instr).getParam()).getStr();
                     MCAsciiz str = new MCAsciiz(getStrLabel(), str1);
                     mcUnit.data.add(str.getNode());
                     MCInstr la = new MCLa(
@@ -648,52 +653,52 @@ public class CodeGen {
                     if (params.get(i) instanceof InitVal) {
                         mcInstr = new MCLi(
                                 ((InitVal) params.get(i)).getValue(),
-                                PReg.getRegById(4+i)
+                                PReg.getRegById(4 + i)
                         );
                     } else if (params.get(i) instanceof AllocInstr &&
                             ((AllocInstr) params.get(i)).getAllocType() == AllocInstr.AllocType.Static) {
                         mcInstr = new MCLa(
                                 value2Label.get(params.get(i)),
-                                PReg.getRegById(4+i)
+                                PReg.getRegById(4 + i)
                         );
                     } else {
                         mcInstr = new MCMove(
-                                PReg.getRegById(4+i),
+                                PReg.getRegById(4 + i),
                                 new ValueReg(params.get(i))
                         );
                     }
 
                     mcbb.list.add(mcInstr.getNode());
-                    jalUse.add(PReg.getRegById(4+i));
+                    jalUse.add(PReg.getRegById(4 + i));
                 }
                 for (int i = 4; i < params.size(); i++) {
                     if (params.get(i) instanceof InitVal) {
                         VReg vReg1 = VReg.alloc();
-                        MCInstr mcInstr1 = new MCLi(((InitVal) params.get(i)).getValue(),vReg1);
+                        MCInstr mcInstr1 = new MCLi(((InitVal) params.get(i)).getValue(), vReg1);
                         mcbb.list.add(mcInstr1.getNode());
                         mcInstr = new MCSw(
                                 PReg.getRegByName("sp"),
                                 vReg1,
-                                -4*i-4
+                                -4 * i - 4
                         );
                     } else if (params.get(i) instanceof AllocInstr &&
                             ((AllocInstr) params.get(i)).getAllocType() == AllocInstr.AllocType.Static) {
                         VReg vReg1 = VReg.alloc();
                         MCInstr mcInstr1 = new MCLa(
                                 value2Label.get(params.get(i)),
-                                PReg.getRegById(4+i)
+                                PReg.getRegById(4 + i)
                         );
                         mcbb.list.add(mcInstr1.getNode());
                         mcInstr = new MCSw(
                                 PReg.getRegByName("sp"),
                                 vReg1,
-                                -4*i-4
+                                -4 * i - 4
                         );
                     } else {
                         mcInstr = new MCSw(
                                 PReg.getRegByName("sp"),
                                 new ValueReg(params.get(i)),
-                                -4*i-4
+                                -4 * i - 4
                         );
                     }
 
@@ -709,7 +714,7 @@ public class CodeGen {
                 );
                 mcbb.list.add(mcInstr.getNode());
                 jalDef.add(PReg.getRegByName("v0"));
-                jal.getNode().insertAfter(new MCNop(jalDef,jalUse).getNode());
+                jal.getNode().insertAfter(new MCNop(jalDef, jalUse).getNode());
                 mcInstr = new MCLw(
                         PReg.getRegByName("sp"),
                         PReg.getRegByName("ra"),
@@ -738,10 +743,10 @@ public class CodeGen {
                         vReg = VReg.alloc();
                         if (((LoadInstr) instr).getIndexes() instanceof InitVal) {
                             mcInstr = new MCLw(
-                                  PReg.getRegById(0),
-                                  vReg,
-                                  data.label,
-                                  ((InitVal) ((LoadInstr) instr).getIndexes()).getValue() * 4
+                                    PReg.getRegById(0),
+                                    vReg,
+                                    data.label,
+                                    ((InitVal) ((LoadInstr) instr).getIndexes()).getValue() * 4
                             );
 
                         } else {
@@ -794,7 +799,7 @@ public class CodeGen {
                         }
                     }
                     mcbb.list.add(mcInstr.getNode());
-                    value2Reg.put(instr,vReg);
+                    value2Reg.put(instr, vReg);
                 } else if (arr instanceof ArrView || arr instanceof Param) {
                     vReg = VReg.alloc();
                     if (((LoadInstr) instr).getIndexes() instanceof InitVal) {
@@ -837,7 +842,7 @@ public class CodeGen {
                 if (((StoreInstr) instr).getTarget() instanceof InitVal) {
                     VReg vReg1 = VReg.alloc();
                     MCInstr mcInstr1 = new MCLi(
-                        ((InitVal) ((StoreInstr) instr).getTarget()).getValue(),
+                            ((InitVal) ((StoreInstr) instr).getTarget()).getValue(),
                             vReg1
                     );
                     target = vReg1;
@@ -950,7 +955,7 @@ public class CodeGen {
                         mcbb.list.add(mcLi.getNode());
                         regMCBlockPair = new Pair<>(vReg1, new PsuMCBlock(p.getLast()));
                     } else {*/
-                        regMCBlockPair = new Pair<>(new ValueReg(p.getFirst()), new PsuMCBlock(p.getLast()));
+                    regMCBlockPair = new Pair<>(new ValueReg(p.getFirst()), new PsuMCBlock(p.getLast()));
                     //}//这里的ValueReg里可能是InitVal
                     list.add(regMCBlockPair);
                 }
@@ -1169,20 +1174,25 @@ public class CodeGen {
                     mcbb.list.add(mcInstr.getNode());
                     mcbb.list.add(mcInstr2.getNode());
                 } else if (right instanceof InitVal) {
-                    mcInstr1 = new MCLi(
-                            ((InitVal) right).getValue(),
-                            t
-                    );
-                    mcInstr = new MCInstrR(
-                            null,
-                            new ValueReg(left),
-                            t,
-                            MCInstrR.Type.div
-                    );
-                    mcInstr2 = new MCMflo(vReg);
-                    mcbb.list.add(mcInstr1.getNode());
-                    mcbb.list.add(mcInstr.getNode());
-                    mcbb.list.add(mcInstr2.getNode());
+                    if (AyaConfig.OPT) {
+                        DivOpt.genSignedDiv(mcbb, instr, vReg);
+                    } else {
+                        mcInstr1 = new MCLi(
+                                ((InitVal) right).getValue(),
+                                t
+                        );
+                        mcInstr = new MCInstrR(
+                                null,
+                                new ValueReg(left),
+                                t,
+                                MCInstrR.Type.div
+                        );
+                        mcInstr2 = new MCMflo(vReg);
+                        mcbb.list.add(mcInstr1.getNode());
+                        mcbb.list.add(mcInstr.getNode());
+                        mcbb.list.add(mcInstr2.getNode());
+                    }
+
                 } else {
                     mcInstr = new MCInstrR(
                             null,
@@ -1217,20 +1227,25 @@ public class CodeGen {
                     mcbb.list.add(mcInstr.getNode());
                     mcbb.list.add(mcInstr2.getNode());
                 } else if (right instanceof InitVal) {
-                    mcInstr1 = new MCLi(
-                            ((InitVal) right).getValue(),
-                            t
-                    );
-                    mcInstr = new MCInstrR(
-                            null,
-                            new ValueReg(left),
-                            t,
-                            MCInstrR.Type.div
-                    );
-                    mcInstr2 = new MCMfhi(vReg);
-                    mcbb.list.add(mcInstr1.getNode());
-                    mcbb.list.add(mcInstr.getNode());
-                    mcbb.list.add(mcInstr2.getNode());
+                    if (AyaConfig.OPT) {
+                        DivOpt.genSignedMod(mcbb, instr, vReg);
+                    } else {
+                        mcInstr1 = new MCLi(
+                                ((InitVal) right).getValue(),
+                                t
+                        );
+                        mcInstr = new MCInstrR(
+                                null,
+                                new ValueReg(left),
+                                t,
+                                MCInstrR.Type.div
+                        );
+                        mcInstr2 = new MCMfhi(vReg);
+                        mcbb.list.add(mcInstr1.getNode());
+                        mcbb.list.add(mcInstr.getNode());
+                        mcbb.list.add(mcInstr2.getNode());
+                    }
+
                 } else {
                     mcInstr = new MCInstrR(
                             null,
@@ -1286,18 +1301,19 @@ public class CodeGen {
                 MCInstr mcInstr;
                 MCInstr mcInstr1;
                 if (right instanceof InitVal) {
-                    if (((InitVal) right).getValue() < (1<<15 -1)) {
+                    int rval = ((InitVal) right).getValue();
+                    if (isImm16(rval)) {
                         mcInstr = new MCInstrI(
                                 vReg,
                                 new ValueReg(left),
-                                ((InitVal) right).getValue(),
+                                rval,
                                 MCInstrI.Type.slti
                         );
                         mcbb.list.add(mcInstr.getNode());
                     } else {
                         VReg vReg1 = VReg.alloc();
                         mcInstr1 = new MCLi(
-                                ((InitVal) right).getValue(),
+                                rval,
                                 vReg1
                         );
                         mcInstr = new MCInstrR(
@@ -1337,4 +1353,10 @@ public class CodeGen {
         }
         value2Reg.put(instr, vReg);
     }
+
+    private static boolean isImm16(int rval) {
+        return rval <= (1 << 15 - 1) && rval >= -32768;
+    }
+
+
 }

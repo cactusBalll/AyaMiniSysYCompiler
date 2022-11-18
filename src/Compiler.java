@@ -18,8 +18,8 @@ public class Compiler {
     public static void main(String[] argv) throws Exception {
 
         try {
-            emitMIPS(argv[0],argv[1]);
-            //emitMIPSSubmit();
+            //emitMIPS(argv[0],argv[1]);
+            emitMIPSSubmit();
         } catch (LexErr|ParseErr|IRGenErr e) {
             System.out.println("error occurred");
         }

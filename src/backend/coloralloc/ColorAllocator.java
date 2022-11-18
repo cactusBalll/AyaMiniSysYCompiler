@@ -25,7 +25,8 @@ public class ColorAllocator {
         this.function = function;
         //初始化initial里的临时寄存器
         function.list.forEach(bbNode -> {
-            bbNode.getValue().list.forEach(
+            MCBlock bb = bbNode.getValue();
+            bb.list.forEach(
                     instrNode -> {
                         if (!instrNode.getValue().getDef().isEmpty()) {
                             Reg reg = instrNode.getValue().getDef().iterator().next();
@@ -39,6 +40,34 @@ public class ColorAllocator {
             );
         });
     }
+
+    private final Map<Reg, Double> spillPRT = new HashMap<>(); // 溢出优先级
+
+    private void calculateSpillPRT() {
+        spillPRT.clear();
+        for (MyNode<MCBlock> bbNode : function.list) {
+            MCBlock bb = bbNode.getValue();
+            for (MyNode<MCInstr> instrNode : bb.list) {
+                MCInstr instr = instrNode.getValue();
+                for (Reg reg : instr.getDef()) {
+                    spillPRT.compute(reg,
+                            (reg1, aDouble) ->
+                                     (aDouble == null ?
+                                            Math.pow(10, bb.loopDepth) :
+                                            aDouble + Math.pow(10, bb.loopDepth)));
+                }
+                for (Reg reg : instr.getUse()) {
+                    spillPRT.compute(reg,
+                            (reg1, aDouble) ->
+                                     (aDouble == null ?
+                                            Math.pow(10, bb.loopDepth) :
+                                            aDouble + Math.pow(10, bb.loopDepth)));
+                }
+
+            }
+        }
+    }
+
     private void clear() {
         simplifyWorkList.clear();
         freezeWorkList.clear();
@@ -55,7 +84,7 @@ public class ColorAllocator {
         iGraph.adjSet.clear();
         iGraph.nodes.clear();
         iGraph.nodes.addAll(initial);
-        iGraph.nodes.forEach(n->{
+        iGraph.nodes.forEach(n -> {
             if (n.reg instanceof VReg) {
                 n.color = null;
                 n.degree = 0;
@@ -67,9 +96,11 @@ public class ColorAllocator {
             n.moveList.clear();
         });
     }
+
     public void run() {
         while (true) {
             new CalcuLiveInfo().runOnFunction(function);
+            calculateSpillPRT();
             clear();
             build();
             makeWorkList();
@@ -152,7 +183,7 @@ public class ColorAllocator {
                 if (instr instanceof MCMove) {
                     MCMove move = (MCMove) instr;
                     if (!(move.s instanceof PReg && ((PReg) move.s).id == 2 ||
-                        move.d instanceof PReg && ((PReg) move.d).id == 2)) {
+                            move.d instanceof PReg && ((PReg) move.d).id == 2)) {
                         live.removeAll(instr.getUse());
                         IGMove igMove = new IGMove(reg2Node(move.s), reg2Node(move.d));
                         instr.getUse().forEach(
@@ -184,7 +215,7 @@ public class ColorAllocator {
         Set<PReg> sp = PReg.getSpRegs();
         for (IGEdge e :
                 iGraph.adjSet) {
-            if (e.u.reg instanceof PReg &&sp.contains((PReg) e.u.reg) || e.v.reg instanceof PReg && sp.contains((PReg) e.v.reg)) {
+            if (e.u.reg instanceof PReg && sp.contains((PReg) e.u.reg) || e.v.reg instanceof PReg && sp.contains((PReg) e.v.reg)) {
                 System.out.println("error occured");
                 throw new RuntimeException();
             }
@@ -192,12 +223,12 @@ public class ColorAllocator {
     }
 
     // 可用于着色的寄存器
-    private final Set<PReg> colors = new HashSet<PReg>(){{
+    private final Set<PReg> colors = new HashSet<PReg>() {{
         addAll(PReg.getTRegs());
     }};
     private final Set<IGNode> precolored = new HashSet<IGNode>() {{
-        PReg.getTRegs().forEach(reg->{
-            IGNode t= new IGNode(reg);
+        PReg.getTRegs().forEach(reg -> {
+            IGNode t = new IGNode(reg);
             t.degree = Integer.MAX_VALUE; //预着色节点度无限大
             add(t);
         });
@@ -428,8 +459,18 @@ public class ColorAllocator {
     }
 
     private void selectSpill() {
-        Optional<IGNode> t = spillWorkList.stream().filter(n->!spillCreated.contains(n)).findAny(); // 应该用启发式算法取
-        IGNode m = t.get();
+        //Optional<IGNode> t = spillWorkList.stream().filter(n -> !spillCreated.contains(n)).findAny(); // 应该用启发式算法取
+        //IGNode m = t.get();
+        IGNode m = spillWorkList.stream().min((node1,node2)->{
+            double t = spillPRT.get(node1.reg) / node1.degree - spillPRT.get(node2.reg) / node2.degree;
+            if (t < 0) {
+                return -1;
+            } else if (t == 0) {
+                return 0;
+            } else {
+                return 1;
+            }
+        }).get();
         spillWorkList.remove(m);
         simplifyWorkList.add(m);
         freezeMoves(m);
@@ -462,6 +503,7 @@ public class ColorAllocator {
     private int spilledVarCnt = 0;
 
     private Set<IGNode> spillCreated = new HashSet<>();
+
     private void rewriteProgram() {
         Set<IGNode> newTemp = new HashSet<>();
         for (IGNode n :

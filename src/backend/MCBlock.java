@@ -24,7 +24,7 @@ public class MCBlock {
     public Set<Reg> def = new HashSet<>();
     public Set<Reg> use = new HashSet<>();
 
-
+    public int loopDepth;
 
     @Override
     public String toString() {

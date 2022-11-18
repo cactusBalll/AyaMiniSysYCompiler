@@ -52,6 +52,8 @@ public class MCInstrI extends MCInstr {
         xori,
 
         sll,
+        sra,
+        srl,
     }
 
     public MCInstrI(Reg t, Reg s, int imm, Type type) {
