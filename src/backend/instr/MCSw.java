@@ -3,7 +3,9 @@ package backend.instr;
 import backend.regs.PReg;
 import backend.regs.Reg;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -51,8 +53,8 @@ public class MCSw extends MCInstr{
 
 
     @Override
-    public Set<Reg> getUse() {
-        Set<Reg> ret = new HashSet<>();
+    public List<Reg> getUse() {
+        List<Reg> ret = new ArrayList<>();
         ret.add(t);
         ret.add(s);
         return ret;

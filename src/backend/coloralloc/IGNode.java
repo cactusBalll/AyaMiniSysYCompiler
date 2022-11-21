@@ -3,16 +3,14 @@ package backend.coloralloc;
 import backend.regs.PReg;
 import backend.regs.Reg;
 
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 /**
  * 冲突图节点
  */
 public class IGNode {
     public Reg reg;
-    public Set<IGNode> edges = new HashSet<>();
+    public List<IGNode> edges = new ArrayList<>();
     public int degree = 0;
     public IGNode alias;
     public PReg color;

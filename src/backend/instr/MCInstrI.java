@@ -3,7 +3,9 @@ package backend.instr;
 import backend.regs.PReg;
 import backend.regs.Reg;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public class MCInstrI extends MCInstr {
@@ -13,15 +15,15 @@ public class MCInstrI extends MCInstr {
     public Type type;
 
     @Override
-    public Set<Reg> getDef() {
-        Set<Reg> ret = new HashSet<>();
+    public List<Reg> getDef() {
+        List<Reg> ret = new ArrayList<>();
         ret.add(t);
         return ret;
     }
 
     @Override
-    public Set<Reg> getUse() {
-        Set<Reg> ret = new HashSet<>();
+    public List<Reg> getUse() {
+        List<Reg> ret = new ArrayList<>();
         ret.add(s);
         return ret;
     }

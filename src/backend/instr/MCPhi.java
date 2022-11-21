@@ -8,6 +8,7 @@ import backend.regs.ValueReg;
 import ir.instruction.PhiInstr;
 import util.Pair;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -35,15 +36,15 @@ public class MCPhi extends MCInstr{
     }
 
     @Override
-    public Set<Reg> getDef() {
-        Set<Reg> ret = new HashSet<>();
+    public List<Reg> getDef() {
+        List<Reg> ret = new ArrayList<>();
         ret.add(dest);
         return ret;
     }
 
     @Override
-    public Set<Reg> getUse() {
-        Set<Reg> ret = new HashSet<>();
+    public List<Reg> getUse() {
+        List<Reg> ret = new ArrayList<>();
         for (Pair<Reg, MCBlock> p :
                 pairs) {
             ret.add(p.getFirst());

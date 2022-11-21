@@ -10,10 +10,7 @@ import backend.regs.VReg;
 import exceptions.BackEndErr;
 import util.MyNode;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  *  临时使用的寄存器分配，就是不分配
@@ -52,8 +49,8 @@ public class BakaAllocator {
                 if (instr instanceof MCLw && ((MCLw) instr).isLoadArg) {
                     ((MCLw) instr).numOffset += mcFunction.stackSlot * 4;
                 }
-                Set<Reg> uses = instr.getUse();
-                Set<Reg> def = instr.getDef();
+                List<Reg> uses = instr.getUse();
+                List<Reg> def = instr.getDef();
                 Set<Reg> all = new HashSet<>(def);
                 all.addAll(uses);
                 Map<VReg, PReg> mapper = new HashMap<>();

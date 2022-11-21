@@ -52,14 +52,14 @@ public class ColorAllocator {
                 for (Reg reg : instr.getDef()) {
                     spillPRT.compute(reg,
                             (reg1, aDouble) ->
-                                     (aDouble == null ?
+                                    (aDouble == null ?
                                             Math.pow(10, bb.loopDepth) :
                                             aDouble + Math.pow(10, bb.loopDepth)));
                 }
                 for (Reg reg : instr.getUse()) {
                     spillPRT.compute(reg,
                             (reg1, aDouble) ->
-                                     (aDouble == null ?
+                                    (aDouble == null ?
                                             Math.pow(10, bb.loopDepth) :
                                             aDouble + Math.pow(10, bb.loopDepth)));
                 }
@@ -76,12 +76,13 @@ public class ColorAllocator {
         coalescedNodes.clear();
         coloredNodes.clear();
         selectStack.clear();
+        selectSet.clear();
         coalescesMoves.clear();
         constrainedMoves.clear();
         frozenMoves.clear();
         worklistMoves.clear();
         activeMoves.clear();
-        iGraph.adjSet.clear();
+        //iGraph.adjSet.clear();
         iGraph.nodes.clear();
         iGraph.nodes.addAll(initial);
         iGraph.nodes.forEach(n -> {
@@ -99,7 +100,7 @@ public class ColorAllocator {
 
     public void run() {
         while (true) {
-            new CalcuLiveInfo().runOnFunction(function);
+            new CalcuLiveInfo().runOnFunctionOpt(function);
             calculateSpillPRT();
             clear();
             build();
@@ -163,15 +164,36 @@ public class ColorAllocator {
 
     }
 
+    private final Map<Reg, IGNode> reg2NodeMap = new HashMap<>();
+
     private IGNode reg2Node(Reg reg) {
-        if (reg instanceof PReg) {
-            return precolored.stream().filter(n -> n.reg == reg).findAny().get();
+        /*if (reg instanceof PReg) {
+            for (IGNode n : precolored) {
+                if (n.reg == reg) {
+                    return n;
+                }
+            }
         } else {
-            return initial.stream().filter(n -> n.reg == reg).findAny().get();
+            for (IGNode n : initial) {
+                if (n.reg == reg) {
+                    return n;
+                }
+            }
         }
+        return null;*/
+        return reg2NodeMap.get(reg);
     }
 
     private void build() {
+        reg2NodeMap.clear();
+        for (IGNode n : precolored) {
+            reg2NodeMap.put(n.reg, n);
+        }
+        for (IGNode n : initial) {
+            reg2NodeMap.put(n.reg, n);
+        }
+
+
         for (MyNode<MCBlock> bNode :
                 function.list) {
             MCBlock b = bNode.getValue();
@@ -186,11 +208,13 @@ public class ColorAllocator {
                             move.d instanceof PReg && ((PReg) move.d).id == 2)) {
                         live.removeAll(instr.getUse());
                         IGMove igMove = new IGMove(reg2Node(move.s), reg2Node(move.d));
-                        instr.getUse().forEach(
-                                reg -> reg2Node(reg).moveList.add(igMove));
+                        for (Reg reg1 : instr.getUse()) {
+                            reg2Node(reg1).moveList.add(igMove);
+                        }
 
-                        instr.getDef().forEach(
-                                reg -> reg2Node(reg).moveList.add(igMove));
+                        for (Reg reg : instr.getDef()) {
+                            reg2Node(reg).moveList.add(igMove);
+                        }
 
                         worklistMoves.add(igMove);
                     }
@@ -212,14 +236,14 @@ public class ColorAllocator {
                 live.removeAll(PReg.getSpRegs());
             }
         }
-        Set<PReg> sp = PReg.getSpRegs();
+        /*Set<PReg> sp = PReg.getSpRegs();
         for (IGEdge e :
                 iGraph.adjSet) {
             if (e.u.reg instanceof PReg && sp.contains((PReg) e.u.reg) || e.v.reg instanceof PReg && sp.contains((PReg) e.v.reg)) {
                 System.out.println("error occured");
                 throw new RuntimeException();
             }
-        }
+        }*/
     }
 
     // 可用于着色的寄存器
@@ -235,13 +259,14 @@ public class ColorAllocator {
         forEach(n -> n.color = (PReg) n.reg);
     }};
     private final Set<IGNode> initial = new HashSet<>();
-    private final Set<IGNode> simplifyWorkList = new HashSet<>();
+    private final List<IGNode> simplifyWorkList = new ArrayList<>(); // 改成List优化性能
     private final Set<IGNode> freezeWorkList = new HashSet<>();
     private final Set<IGNode> spillWorkList = new HashSet<>();
     private final Set<IGNode> spilledNodes = new HashSet<>();
     private final Set<IGNode> coalescedNodes = new HashSet<>();
     private final Set<IGNode> coloredNodes = new HashSet<>();
     private final Deque<IGNode> selectStack = new ArrayDeque<>();
+    private final Set<IGNode> selectSet = new HashSet<>(); // 优化contain判断
 
     private final Set<IGMove> coalescesMoves = new HashSet<>();
     private final Set<IGMove> constrainedMoves = new HashSet<>();
@@ -256,9 +281,9 @@ public class ColorAllocator {
         public Set<IGEdge> adjSet = new HashSet<>();
 
         public void addEdge(IGNode u, IGNode v) {
-            if (u != v && !adjSet.contains(new IGEdge(u, v))) {
-                adjSet.add(new IGEdge(u, v));
-                adjSet.add(new IGEdge(v, u));
+            if (u != v /*&& !adjSet.contains(new IGEdge(u, v))*/) {
+                //adjSet.add(new IGEdge(u, v));
+                //adjSet.add(new IGEdge(v, u));
                 if (!precolored.contains(u)) {
                     u.edges.add(v);
                     u.degree += 1;
@@ -286,7 +311,7 @@ public class ColorAllocator {
 
     private Set<IGNode> adjacent(IGNode node) {
         Set<IGNode> ret = new HashSet<>(node.edges);
-        ret.removeAll(selectStack);
+        ret.removeAll(selectSet);
         ret.removeAll(coalescedNodes);
         return ret;
     }
@@ -307,13 +332,19 @@ public class ColorAllocator {
     }
 
     private void simplify() {
-        IGNode node = simplifyWorkList.iterator().next();
+        IGNode node = simplifyWorkList.get(simplifyWorkList.size() - 1);
         if (!(node.reg instanceof VReg)) {
             throw new RuntimeException();
         }
-        simplifyWorkList.remove(node);
+
+        simplifyWorkList.remove(simplifyWorkList.size() - 1);
         selectStack.push(node);
-        adjacent(node).forEach(this::decrementDegree);
+        selectSet.add(node);
+        for (IGNode igNode : node.edges) {
+            if (!selectSet.contains(igNode) && !coalescedNodes.contains(igNode)) {
+                decrementDegree(igNode);
+            }
+        }
     }
 
     private void decrementDegree(IGNode node) {
@@ -362,12 +393,13 @@ public class ColorAllocator {
         if (u == v) {
             coalescesMoves.add(m);
             addWorkList(u);
-        } else if (precolored.contains(v) || iGraph.adjSet.contains(new IGEdge(u, v))) {
+        } else if (precolored.contains(v) || /*iGraph.adjSet.contains(new IGEdge(u, v))*/
+                u.edges.contains(v)||v.edges.contains(u)) {
             constrainedMoves.add(m);
             addWorkList(u);
             addWorkList(v);
         } else if (precolored.contains(u) && adjacent(v).stream().allMatch(t -> ok(t, u)) ||
-                !precolored.contains(u) && conservative(new SetUtil<IGNode>().union(adjacent(u), adjacent(v)))) {
+                !precolored.contains(u) && conservative(SetUtil.ofIGNode().union(adjacent(u), adjacent(v)))) {
             coalescesMoves.add(m);
             combine(u, v);
             addWorkList(u);
@@ -385,7 +417,8 @@ public class ColorAllocator {
     }
 
     private boolean ok(IGNode t, IGNode r) {
-        return t.degree < colors.size() || precolored.contains(t) || iGraph.adjSet.contains(new IGEdge(t, r));
+        return t.degree < colors.size() || precolored.contains(t)
+                || /*iGraph.adjSet.contains(new IGEdge(t, r))*/t.edges.contains(r) || r.edges.contains(t);
     }
 
     private boolean conservative(Set<IGNode> nodes) {
@@ -461,7 +494,7 @@ public class ColorAllocator {
     private void selectSpill() {
         //Optional<IGNode> t = spillWorkList.stream().filter(n -> !spillCreated.contains(n)).findAny(); // 应该用启发式算法取
         //IGNode m = t.get();
-        IGNode m = spillWorkList.stream().min((node1,node2)->{
+        IGNode m = spillWorkList.stream().min((node1, node2) -> {
             double t = spillPRT.get(node1.reg) / node1.degree - spillPRT.get(node2.reg) / node2.degree;
             if (t < 0) {
                 return -1;
@@ -482,8 +515,10 @@ public class ColorAllocator {
             Set<PReg> okColors = new HashSet<>(colors);
             for (IGNode w :
                     n.edges) {
-                if (new SetUtil<IGNode>().union(coloredNodes, precolored).contains(getAlias(w))) {
-                    okColors.remove(getAlias(w).color);
+                // new SetUtil<IGNode>().union(coloredNodes, precolored).contains(getAlias(w))
+                IGNode alias = getAlias(w);
+                if (coloredNodes.contains(alias) || precolored.contains(alias)) {
+                    okColors.remove(alias.color);
                 }
             }
             if (okColors.isEmpty()) {
@@ -511,43 +546,43 @@ public class ColorAllocator {
             function.stackSlot++;
             spilledVarCnt++;
             Reg r = n.reg;
-            function.list.forEach(bbNode -> {
-                bbNode.getValue().list.toList().forEach(
-                        instr -> {
-                            VReg t = new VReg(233);
-                            if (instr.getUse().contains(r) || instr.getDef().contains(r)) {
-                                IGNode tnode = new IGNode(t);
-                                newTemp.add(tnode);
-                                spillCreated.add(tnode);
-                                //iGraph.nodes.add(tnode);
-                            }
-                            if (instr.getUse().contains(r)) {
-                                try {
-                                    MCLw lw = new MCLw(PReg.getRegByName("sp"),
-                                            t,
-                                            spilledVarCnt * 4 + function.stackTop * 4
-                                    );
-                                    instr.getNode().insertBefore(lw.getNode());
-                                } catch (BackEndErr e) {
-                                    throw new RuntimeException(e);
-                                }
-                            }
-                            if (instr.getDef().contains(r)) {
-                                try {
-                                    MCSw sw = new MCSw(PReg.getRegByName("sp"),
-                                            t,
-                                            spilledVarCnt * 4 + function.stackTop * 4
-                                    );
-                                    instr.getNode().insertAfter(sw.getNode());
-
-                                } catch (BackEndErr e) {
-                                    throw new RuntimeException(e);
-                                }
-                            }
-                            instr.allocate(r, t);
+            for (MyNode<MCBlock> bbNode : function.list) {
+                for (MCInstr instr : bbNode.getValue().list.toList()) {
+                    VReg t = new VReg(233);
+                    List<Reg> use = instr.getUse();
+                    List<Reg> def = instr.getDef();
+                    if (use.contains(r) || def.contains(r)) {
+                        IGNode tnode = new IGNode(t);
+                        newTemp.add(tnode);
+                        spillCreated.add(tnode);
+                        //iGraph.nodes.add(tnode);
+                    }
+                    if (use.contains(r)) {
+                        try {
+                            MCLw lw = new MCLw(PReg.getRegByName("sp"),
+                                    t,
+                                    spilledVarCnt * 4 + function.stackTop * 4
+                            );
+                            instr.getNode().insertBefore(lw.getNode());
+                        } catch (BackEndErr e) {
+                            throw new RuntimeException(e);
                         }
-                );
-            });
+                    }
+                    if (def.contains(r)) {
+                        try {
+                            MCSw sw = new MCSw(PReg.getRegByName("sp"),
+                                    t,
+                                    spilledVarCnt * 4 + function.stackTop * 4
+                            );
+                            instr.getNode().insertAfter(sw.getNode());
+
+                        } catch (BackEndErr e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+                    instr.allocate(r, t);
+                }
+            }
 
         }
         spilledNodes.clear();

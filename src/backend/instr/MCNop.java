@@ -36,13 +36,13 @@ public class MCNop extends MCInstr{
     private Set<Reg> use;
 
     @Override
-    public Set<Reg> getDef() {
-        return new HashSet<>(def);
+    public List<Reg> getDef() {
+        return new ArrayList<>(def);
     }
 
     @Override
-    public Set<Reg> getUse() {
-        return new HashSet<>(use);
+    public List<Reg> getUse() {
+        return new ArrayList<>(use);
     }
 
     @Override

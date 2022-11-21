@@ -1,5 +1,7 @@
 package util;
 
+import backend.coloralloc.IGNode;
+
 import java.util.HashSet;
 import java.util.Set;
 
@@ -9,4 +11,10 @@ public class SetUtil<T> {
         ret.addAll(v);
         return ret;
     }
+
+    public static SetUtil<IGNode> ofIGNode() {
+        return igNodeSetUtil;
+    }
+
+    private static SetUtil<IGNode> igNodeSetUtil = new SetUtil<>();
 }

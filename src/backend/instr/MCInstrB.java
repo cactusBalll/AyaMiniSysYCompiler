@@ -4,7 +4,9 @@ import backend.MCBlock;
 import backend.regs.PReg;
 import backend.regs.Reg;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public class MCInstrB extends MCInstr{
@@ -15,13 +17,13 @@ public class MCInstrB extends MCInstr{
     public MCBlock target;
 
     @Override
-    public Set<Reg> getDef() {
-        return new HashSet<>();
+    public List<Reg> getDef() {
+        return new ArrayList<>();
     }
 
     @Override
-    public Set<Reg> getUse() {
-        Set<Reg> ret = new HashSet<>();
+    public List<Reg> getUse() {
+        List<Reg> ret = new ArrayList<>();
         ret.add(s);
         ret.add(t);
         return ret;

@@ -4,17 +4,19 @@ import backend.regs.PReg;
 import backend.regs.Reg;
 import util.MyNode;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public abstract class MCInstr {
     private final MyNode node = new MyNode<>(this);
 
-    public Set<Reg> getDef() {
-        return new HashSet<>();
+    public List<Reg> getDef() {
+        return new ArrayList<>();
     }
-    public Set<Reg> getUse() {
-        return new HashSet<>();
+    public List<Reg> getUse() {
+        return new ArrayList<>();
     }
     public MyNode getNode() {
         return node;

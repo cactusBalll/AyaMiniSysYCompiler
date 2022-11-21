@@ -5,7 +5,9 @@ import backend.regs.PReg;
 import backend.regs.Reg;
 import exceptions.BackEndErr;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public class MCJal extends MCInstr{
@@ -20,8 +22,8 @@ public class MCJal extends MCInstr{
         return "jal" + ' ' + target.label.name;
     }
     @Override
-    public Set<Reg> getDef() {
-        Set<Reg> ret = new HashSet<>();
+    public List<Reg> getDef() {
+        List<Reg> ret = new ArrayList<>();
         try {
             ret.add(PReg.getRegByName("ra"));
         } catch (BackEndErr e) {
