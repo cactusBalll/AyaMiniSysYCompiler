@@ -1,7 +1,10 @@
+import Driver.AyaConfig;
 import backend.BakaAllocator;
 import backend.CodeGen;
 import backend.MCUnit;
 import backend.coloralloc.ColorAllocDriver;
+import backend.pass.Peephole;
+import backend.pass.RemoveJmp;
 import exceptions.BackEndErr;
 import exceptions.IRGenErr;
 import exceptions.LexErr;
@@ -18,8 +21,8 @@ public class Compiler {
     public static void main(String[] argv) throws Exception {
 
         try {
-            //emitMIPS(argv[0],argv[1]);
-            emitMIPSSubmit();
+            emitMIPS(argv[0],argv[1]);
+            //emitMIPSSubmit();
         } catch (LexErr|ParseErr|IRGenErr e) {
             System.out.println("error occurred");
         }
@@ -67,15 +70,28 @@ public class Compiler {
             compUnit.fullMaintain();
             new PrecSucc().run(compUnit);
             new BBInfo().run(compUnit);
-            new GVNGCM().run(compUnit);
+            if (AyaConfig.OPT) {
+                new GVNGCM().run(compUnit);
+            }
+
 
             compUnit.setValueName();
             CodeGen codeGen = new CodeGen(compUnit);
             MCUnit mcUnit = codeGen.run();
-            //BakaAllocator bakaAllocator = new BakaAllocator(mcUnit);
-            //bakaAllocator.run();
+            if (AyaConfig.OPT) {
+                new RemoveJmp().run(mcUnit);
+            }
+            if (AyaConfig.OPT) {
+                ColorAllocDriver.run(mcUnit);
+            } else {
+                BakaAllocator bakaAllocator = new BakaAllocator(mcUnit);
+                bakaAllocator.run();
+            }
+            if (AyaConfig.OPT) {
+                new Peephole().run(mcUnit);
+            }
 
-            ColorAllocDriver.run(mcUnit);
+
             out = new PrintStream(MIPSTarget);
             System.setOut(out);
             System.out.print(mcUnit);
@@ -130,9 +146,18 @@ public class Compiler {
 
             CodeGen codeGen = new CodeGen(compUnit);
             MCUnit mcUnit = codeGen.run();
-            //BakaAllocator bakaAllocator = new BakaAllocator(mcUnit);
-            //bakaAllocator.run();
-            ColorAllocDriver.run(mcUnit);
+            if (AyaConfig.OPT) {
+                new RemoveJmp().run(mcUnit);
+            }
+            if (AyaConfig.OPT) {
+                ColorAllocDriver.run(mcUnit);
+            } else {
+                BakaAllocator bakaAllocator = new BakaAllocator(mcUnit);
+                bakaAllocator.run();
+            }
+            if (AyaConfig.OPT) {
+                new Peephole().run(mcUnit);
+            }
             out = new PrintStream(MIPSTarget);
             System.setOut(out);
             System.out.print(mcUnit);

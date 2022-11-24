@@ -219,6 +219,19 @@ public class IRGenManager {
         nwBlock.addInstr(jmpInstr);
         return jmpInstr;
     }
+
+    /**
+     * 跳转到目标并重排基本块，寄希望于后端可以优化
+     * @param target 目标
+     * @return jmp语句
+     */
+    public Instr genJmpAndReorderBB(BasicBlock target) {
+        Instr jmpInstr = genJmp(target);
+        nwBlock.getNode().removeMe();
+        target.getNode().insertBefore(nwBlock.getNode());
+        return jmpInstr;
+    }
+
     public BasicBlock getBB() {
         BasicBlock bb = new BasicBlock();
         bb.loopDepth = loopBB.size();

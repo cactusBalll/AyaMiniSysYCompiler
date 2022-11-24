@@ -253,7 +253,7 @@ public class IRGen {
             irGenManager.addBB(stmt1BB);
             stmt1BB.loopDepth = loopDepth;
             genStmt(stmt1);
-            irGenManager.genJmp(bb);
+            irGenManager.genJmpAndReorderBB(bb);
 
             irGenManager.addBB(exitBB);
 
@@ -414,7 +414,9 @@ public class IRGen {
         if (idx < params.size()) {
             ErrorHandler.getInstance().addError(RequiredErr.buildPrintfParamNotMatch(line));
         }
-        irGenManager.genPutStr(sb.toString());
+        if (sb.length() > 0) {
+            irGenManager.genPutStr(sb.toString());
+        }
     }
 
     private void genDecl(NonTerminator decl, boolean onStack) throws IRGenErr {

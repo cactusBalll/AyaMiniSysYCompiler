@@ -3,6 +3,7 @@ package backend.instr;
 import backend.MCBlock;
 import backend.regs.PReg;
 import backend.regs.Reg;
+import exceptions.BackEndErr;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -25,7 +26,10 @@ public class MCInstrB extends MCInstr{
     public List<Reg> getUse() {
         List<Reg> ret = new ArrayList<>();
         ret.add(s);
-        ret.add(t);
+        if (t != null) {
+            ret.add(t);
+        }
+
         return ret;
     }
 
@@ -45,9 +49,14 @@ public class MCInstrB extends MCInstr{
         bgtz,
         blez,
         bltz,
-        bne
+        bne,
+        bnez,
+        beqz,
     }
 
+    public boolean isBnez() {
+        return type == Type.bnez;
+    }
     public MCInstrB(Type type, Reg s, Reg t, MCBlock target) {
         this.type = type;
         this.s = s;

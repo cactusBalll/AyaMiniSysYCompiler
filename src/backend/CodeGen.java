@@ -565,9 +565,9 @@ public class CodeGen {
                     mcbb.list.add(j.getNode());
                 } else {
                     MCInstr br = new MCInstrB(
-                            MCInstrB.Type.bne,
+                            MCInstrB.Type.bnez,
                             new ValueReg(((BrInstr) instr).getCond()),
-                            PReg.getRegById(0),
+                            null,
                             new PsuMCBlock(((BrInstr) instr).getBr0())
                     );
                     MCInstr j = new MCJ(
@@ -1111,35 +1111,72 @@ public class CodeGen {
                 MCInstr mcInstr2 = null;
                 Reg t = VReg.alloc();
                 if (left instanceof InitVal) {
-                    mcInstr1 = new MCLi(
-                            ((InitVal) left).getValue(),
-                            t
-                    );
-                    mcInstr = new MCInstrR(
-                            null,
-                            t,
-                            new ValueReg(right),
-                            MCInstrR.Type.mult
-                    );
-                    mcInstr2 = new MCMflo(vReg);
-                    mcbb.list.add(mcInstr1.getNode());
-                    mcbb.list.add(mcInstr.getNode());
-                    mcbb.list.add(mcInstr2.getNode());
+                    int timm = ((InitVal) left).getValue();
+                    boolean minus = false;
+                    boolean abort = false;
+                    if (timm < 0) {
+                        if (timm == Integer.MIN_VALUE) {
+                            abort = true;
+                        } else {
+                            minus = true;
+                            timm = -timm;
+                        }
+                    }
+                    if (AyaConfig.OPT && (timm & (timm - 1)) == 0 && !abort) {
+                        // 二的次幂
+                        int shift = Integer.numberOfTrailingZeros(timm);
+                        mcInstr = new MCInstrI(vReg, new ValueReg(right), shift, MCInstrI.Type.sll);
+                        mcbb.list.add(mcInstr.getNode());
+                    } else {
+                        mcInstr1 = new MCLi(
+                                ((InitVal) left).getValue(),
+                                t
+                        );
+                        mcInstr = new MCInstrR(
+                                null,
+                                t,
+                                new ValueReg(right),
+                                MCInstrR.Type.mult
+                        );
+                        mcInstr2 = new MCMflo(vReg);
+                        mcbb.list.add(mcInstr1.getNode());
+                        mcbb.list.add(mcInstr.getNode());
+                        mcbb.list.add(mcInstr2.getNode());
+                    }
+
                 } else if (right instanceof InitVal) {
-                    mcInstr1 = new MCLi(
-                            ((InitVal) right).getValue(),
-                            t
-                    );
-                    mcInstr = new MCInstrR(
-                            null,
-                            new ValueReg(left),
-                            t,
-                            MCInstrR.Type.mult
-                    );
-                    mcInstr2 = new MCMflo(vReg);
-                    mcbb.list.add(mcInstr1.getNode());
-                    mcbb.list.add(mcInstr.getNode());
-                    mcbb.list.add(mcInstr2.getNode());
+                    int timm = ((InitVal) right).getValue();
+                    boolean minus = false;
+                    boolean abort = false;
+                    if (timm < 0) {
+                        if (timm == Integer.MIN_VALUE) {
+                            abort = true;
+                        } else {
+                            minus = true;
+                            timm = -timm;
+                        }
+                    }
+                    if (AyaConfig.OPT && (timm & (timm - 1)) == 0 && !abort) {
+                        // 二的次幂
+                        int shift = Integer.numberOfTrailingZeros(timm);
+                        mcInstr = new MCInstrI(vReg, new ValueReg(left), shift, MCInstrI.Type.sll);
+                        mcbb.list.add(mcInstr.getNode());
+                    } else {
+                        mcInstr1 = new MCLi(
+                                ((InitVal) right).getValue(),
+                                t
+                        );
+                        mcInstr = new MCInstrR(
+                                null,
+                                new ValueReg(left),
+                                t,
+                                MCInstrR.Type.mult
+                        );
+                        mcInstr2 = new MCMflo(vReg);
+                        mcbb.list.add(mcInstr1.getNode());
+                        mcbb.list.add(mcInstr.getNode());
+                        mcbb.list.add(mcInstr2.getNode());
+                    }
                 } else {
                     mcInstr = new MCInstrR(
                             null,
