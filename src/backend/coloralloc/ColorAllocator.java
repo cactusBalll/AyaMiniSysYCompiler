@@ -1,5 +1,6 @@
 package backend.coloralloc;
 
+import Driver.AyaConfig;
 import backend.MCBlock;
 import backend.MCFunction;
 import backend.instr.*;
@@ -53,15 +54,15 @@ public class ColorAllocator {
                     spillPRT.compute(reg,
                             (reg1, aDouble) ->
                                     (aDouble == null ?
-                                            Math.pow(10, bb.loopDepth) :
-                                            aDouble + Math.pow(10, bb.loopDepth)));
+                                            Math.pow(AyaConfig.Spill_PARAM, bb.loopDepth) :
+                                            aDouble + Math.pow(AyaConfig.Spill_PARAM, bb.loopDepth)));
                 }
                 for (Reg reg : instr.getUse()) {
                     spillPRT.compute(reg,
                             (reg1, aDouble) ->
                                     (aDouble == null ?
-                                            Math.pow(10, bb.loopDepth) :
-                                            aDouble + Math.pow(10, bb.loopDepth)));
+                                            Math.pow(AyaConfig.Spill_PARAM, bb.loopDepth) :
+                                            aDouble + Math.pow(AyaConfig.Spill_PARAM, bb.loopDepth)));
                 }
 
             }

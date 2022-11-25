@@ -11,6 +11,24 @@ import java.util.List;
 
 public class Function extends User{
 
+    private boolean isPure = false;
+    private boolean isRecursive = false;
+
+    public void setPure(boolean pure) {
+        isPure = pure;
+    }
+
+    public void setRecursive(boolean recursive) {
+        isRecursive = recursive;
+    }
+
+    public boolean isPure() {
+        return isPure;
+    }
+
+    public boolean isRecursive() {
+        return isRecursive;
+    }
 
     private final List<Param> params = new ArrayList<>();
 

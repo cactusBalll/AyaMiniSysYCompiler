@@ -10,6 +10,8 @@ import java.util.*;
 public class GVNGCM implements Pass{
     private Map<BinaryOp.Wrapper, BinaryOp> computed = new HashMap<>();
     private Map<ArrView.Wrapper, ArrView> arrViewComputed = new HashMap<>();
+
+    private Map<CallInstr.Wrapper, CallInstr> pureCallComputed = new HashMap<>();
     private Set<BasicBlock> visited = new HashSet<>();
 
     private Set<Instr> instrVisited = new HashSet<>();
@@ -31,6 +33,7 @@ public class GVNGCM implements Pass{
         //GVN
         computed.clear();
         arrViewComputed.clear();
+        pureCallComputed.clear();
         visited.clear();
         RPOwalkFunction(function.getFirstBB());
     }
@@ -60,6 +63,21 @@ public class GVNGCM implements Pass{
                     instr.replaceAllUsesOfMeWith(subs);
                     instr.removeMeFromAllMyUses();
                     toRemove.add(instr);
+                } else {
+                    arrViewComputed.put(((ArrView) instr).getWrapper(), (ArrView) instr);
+                }
+            }
+            if (instr instanceof CallInstr) {
+                CallInstr callInstr = (CallInstr) instr;
+                if (callInstr.getFunction().isPure()) {
+                    if (pureCallComputed.containsKey(callInstr.getWrapper())) {
+                        CallInstr subs = pureCallComputed.get(callInstr.getWrapper());
+                        instr.replaceAllUsesOfMeWith(subs);
+                        instr.removeMeFromAllMyUses();
+                        toRemove.add(instr);
+                    }else {
+                        pureCallComputed.put(callInstr.getWrapper(), callInstr);
+                    }
                 }
             }
         }
@@ -297,8 +315,10 @@ public class GVNGCM implements Pass{
     }
     private boolean isPinned(Instr instr) {
         return  instr instanceof PhiInstr || instr instanceof BrInstr ||
-                instr instanceof JmpInstr || instr instanceof CallInstr ||
+                instr instanceof JmpInstr ||
+                (instr instanceof CallInstr && !((CallInstr) instr).getFunction().isPure()) ||
                 instr instanceof BuiltinCallInstr || instr instanceof StoreInstr ||
-                instr instanceof LoadInstr || instr instanceof RetInstr;
+                instr instanceof LoadInstr || instr instanceof RetInstr ||
+                (instr instanceof BinaryOp && ((BinaryOp) instr).isCondSet());
     }
 }

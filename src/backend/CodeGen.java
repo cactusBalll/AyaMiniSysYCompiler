@@ -1004,7 +1004,7 @@ public class CodeGen {
                 if (calleeSaved.size() != tRegs.size()) {
                     throw new RuntimeException();
                 }
-                for (int i = 0; i < calleeSaved.size(); i++) {
+                for (int i = 0; i < calleeSaved.size() ; i++) {
                     Reg r = calleeSaved.get(i);
 
                     MCInstr mcInstr2 = new MCMove(
@@ -1014,7 +1014,7 @@ public class CodeGen {
                     mcbb.list.add(mcInstr2.getNode());
                     pused.add(tRegs.get(i));
                 } // 恢复被调用者保护寄存器
-                for (int i = 0; i < paramPassed.size(); i++) {
+                for (int i = paramPassed.size()-1; i >= 0; i--) {
                     Reg pReg = paramPassed.get(i);
                     if (paramPassed.contains(pReg)) {
                         MCInstr mcInstr2 = new MCMove(
@@ -1125,8 +1125,13 @@ public class CodeGen {
                     if (AyaConfig.OPT && (timm & (timm - 1)) == 0 && !abort) {
                         // 二的次幂
                         int shift = Integer.numberOfTrailingZeros(timm);
+
                         mcInstr = new MCInstrI(vReg, new ValueReg(right), shift, MCInstrI.Type.sll);
                         mcbb.list.add(mcInstr.getNode());
+                        if (minus) {
+                            mcInstr1 = new MCInstrR(vReg, PReg.getRegById(0), vReg, MCInstrR.Type.subu);
+                            mcbb.list.add(mcInstr1.getNode());
+                        }
                     } else {
                         mcInstr1 = new MCLi(
                                 ((InitVal) left).getValue(),
@@ -1161,6 +1166,10 @@ public class CodeGen {
                         int shift = Integer.numberOfTrailingZeros(timm);
                         mcInstr = new MCInstrI(vReg, new ValueReg(left), shift, MCInstrI.Type.sll);
                         mcbb.list.add(mcInstr.getNode());
+                        if (minus) {
+                            mcInstr1 = new MCInstrR(vReg, PReg.getRegById(0), vReg, MCInstrR.Type.subu);
+                            mcbb.list.add(mcInstr1.getNode());
+                        }
                     } else {
                         mcInstr1 = new MCLi(
                                 ((InitVal) right).getValue(),
@@ -1314,8 +1323,14 @@ public class CodeGen {
                     mcInstr = new MCInstrR(
                             vReg, vReg1, new ValueReg(right), MCInstrR.Type.valueOf(s));
                 } else if (right instanceof InitVal) {
-                    mcInstr = new MCInstrI(
-                            vReg, new ValueReg(left), ((InitVal) right).getValue(), MCInstrI.Type.valueOf(s));
+                    if (((InitVal) right).getValue() == 0) {
+                        mcInstr = new MCInstrR(
+                                vReg, new ValueReg(left), PReg.getRegById(0), MCInstrR.Type.valueOf(s));
+                    } else {
+                        mcInstr = new MCInstrI(
+                                vReg, new ValueReg(left), ((InitVal) right).getValue(), MCInstrI.Type.valueOf(s));
+                    }
+
                 } else {
                     mcInstr = new MCInstrR(
                             vReg, new ValueReg(left), new ValueReg(right), MCInstrR.Type.valueOf(s)

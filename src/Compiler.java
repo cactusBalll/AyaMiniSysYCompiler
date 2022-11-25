@@ -20,12 +20,12 @@ import java.util.List;
 public class Compiler {
     public static void main(String[] argv) throws Exception {
 
-        try {
-            emitMIPS(argv[0],argv[1]);
-            //emitMIPSSubmit();
-        } catch (LexErr|ParseErr|IRGenErr e) {
-            System.out.println("error occurred");
-        }
+        //try {
+            //emitMIPS(argv[0],argv[1]);
+            emitMIPSSubmit();
+        //} catch (LexErr|ParseErr|IRGenErr e) {
+        //    System.out.println("error occurred");
+        //}
     }
 
     public static void emitMIPSSubmit() throws IOException,LexErr,ParseErr,IRGenErr, BackEndErr {
@@ -65,12 +65,20 @@ public class Compiler {
             new Mem2Reg().run(compUnit);
 
             compUnit.maintainUser();
+            new MarkFunc().run(compUnit);
             new SimpleCP().run(compUnit);
 
             compUnit.fullMaintain();
+            if (AyaConfig.OPT) {
+                new SimplifyInstr().run(compUnit);
+                compUnit.fullMaintain();
+                new SimpleCP().run(compUnit);
+                compUnit.fullMaintain();
+            }
             new PrecSucc().run(compUnit);
             new BBInfo().run(compUnit);
             if (AyaConfig.OPT) {
+
                 new GVNGCM().run(compUnit);
             }
 
@@ -134,11 +142,19 @@ public class Compiler {
             new Mem2Reg().run(compUnit);
 
             compUnit.maintainUser();
+            new MarkFunc().run(compUnit);
             new SimpleCP().run(compUnit);
 
             compUnit.fullMaintain();
+            if (AyaConfig.OPT) {
+                new SimplifyInstr().run(compUnit);
+                compUnit.fullMaintain();
+                new SimpleCP().run(compUnit);
+                compUnit.fullMaintain();
+            }
             new PrecSucc().run(compUnit);
             new BBInfo().run(compUnit);
+
             new GVNGCM().run(compUnit);
 
             compUnit.setValueName();
@@ -151,6 +167,8 @@ public class Compiler {
             }
             if (AyaConfig.OPT) {
                 ColorAllocDriver.run(mcUnit);
+                //BakaAllocator bakaAllocator = new BakaAllocator(mcUnit);
+                //bakaAllocator.run();
             } else {
                 BakaAllocator bakaAllocator = new BakaAllocator(mcUnit);
                 bakaAllocator.run();

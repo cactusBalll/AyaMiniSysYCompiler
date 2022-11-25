@@ -157,7 +157,12 @@ public class SimpleCP implements Pass {
 
 
     private boolean hasSideEffect(Instr instr) {
-        return !(instr instanceof ArrView || instr instanceof BinaryOp || instr instanceof PhiInstr);
+        /*if (instr instanceof CallInstr && ((CallInstr) instr).getFunction().isPure()) {
+            System.out.println(String.format("calling pure %s", ((CallInstr) instr).getFunction().getName()));
+        }*/
+        return !(instr instanceof ArrView || instr instanceof BinaryOp || instr instanceof PhiInstr
+                || instr instanceof LoadInstr
+                || (instr instanceof CallInstr && ((CallInstr) instr).getFunction().isPure())); // 调用纯函数没有副作用
     }
 
     @Override

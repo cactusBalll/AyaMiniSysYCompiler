@@ -9,6 +9,7 @@ import util.MyNode;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 
 public class CallInstr extends Instr{
 
@@ -60,6 +61,44 @@ public class CallInstr extends Instr{
         }
         sb.append(')');
         return sb.toString();
+    }
+    private final Wrapper wrapper = new Wrapper(this);
+
+    public Wrapper getWrapper() {
+        return wrapper;
+    }
+
+    public class Wrapper{
+        private CallInstr owner;
+
+        public Wrapper(CallInstr owner) {
+            this.owner = owner;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (!(obj instanceof CallInstr.Wrapper)) {
+                return false;
+            }
+            CallInstr.Wrapper wrapper = (CallInstr.Wrapper)obj;
+            if (owner.getFunction() != wrapper.owner.getFunction()) {
+                return false;
+            }
+            if (owner.getParams().size() != wrapper.owner.getParams().size()) {
+                return false;
+            }
+            for (int i = 0; i < owner.getParams().size(); i++) {
+                if (!Objects.equals(owner.getParams().get(i), wrapper.owner.getParams().get(i))) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(getFunction(),getParams());
+        }
     }
 
 }

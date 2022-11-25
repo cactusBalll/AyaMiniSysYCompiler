@@ -39,7 +39,11 @@ public class BinaryOp extends Instr {
         Sne,
         Not, // MIPS用XOR实现非
     }
-
+    public boolean isCondSet() {
+        //return opType == OpType.Seq || opType == OpType.Sne /*|| opType == OpType.Sle ||
+        //        opType == OpType.Slt || opType == OpType.Sge || opType == OpType.Sgt*/ || opType == OpType.Not;
+        return false;
+    }
     public Integer evaluate() {
         if (!(getLeft() instanceof InitVal) || !(getRight() instanceof InitVal)) {
             return null;
@@ -126,6 +130,9 @@ public class BinaryOp extends Instr {
                 return false;
             }
             Wrapper wrapper = (Wrapper) obj;
+            if (owner.isCondSet() || wrapper.owner.isCondSet()) {
+                return false;
+            }
             return Objects.equals(owner.getLeft(),wrapper.owner.getLeft()) &&
                     Objects.equals(owner.getRight(),wrapper.owner.getRight()) &&
                     Objects.equals(owner.getOpType(), wrapper.owner.getOpType());
