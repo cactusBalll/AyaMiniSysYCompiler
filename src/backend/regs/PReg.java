@@ -50,6 +50,9 @@ public class PReg extends Reg{
             add(new PReg("ra", 31)); //reserved, only for jr $ra
         }
     };
+    public static PReg getZero() {
+        return regs.get(0);
+    }
     public static Set<PReg> getSpRegs() {
         Set<PReg> ret = new HashSet<>();
         ret.add(regs.get(0));
@@ -72,6 +75,24 @@ public class PReg extends Reg{
     public static List<PReg> getTRegs() {
         List<PReg> ret = new ArrayList<>(regs);
         ret.removeAll(getSpRegs());
+        return ret;
+    }
+
+    public static List<PReg> getTRegCalleeSaved() {
+        List<PReg> ret = getTRegs();
+        ret.removeIf(pReg -> pReg.id >= 8 && pReg.id < 16 || pReg.id == 3 || pReg.id >= 24 && pReg.id <= 28);
+        return ret;
+    }
+
+    public static List<PReg> getTRegCallerSaved() {
+        List<PReg> ret = new ArrayList<>();
+        for (int i = 8; i < 16; i++) {
+            ret.add(regs.get(i));
+        }
+        ret.add(regs.get(3));
+        for (int i = 24; i < 29; i++) {
+            ret.add(regs.get(i));
+        }
         return ret;
     }
 

@@ -18,7 +18,7 @@ public class StoreInstr extends Instr{
         super(users, type);
     }
 
-    public StoreInstr(User rhs) {
+    public StoreInstr(StoreInstr rhs) {
         super(rhs);
     }
 

@@ -8,6 +8,7 @@ import util.MyNode;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.function.Consumer;
 
 public class Function extends User{
 
@@ -20,6 +21,10 @@ public class Function extends User{
 
     public void setRecursive(boolean recursive) {
         isRecursive = recursive;
+    }
+
+    public void setList(MyList<BasicBlock> list) {
+        this.list = list;
     }
 
     public boolean isPure() {
@@ -43,7 +48,7 @@ public class Function extends User{
         this.params.addAll(params);
     }
 
-    private final MyList<BasicBlock> list = new MyList<>();
+    private MyList<BasicBlock> list = new MyList<>();
 
     public MyList<BasicBlock> getList() {
         return list;
@@ -61,8 +66,20 @@ public class Function extends User{
         super(users, type);
     }
 
-    public Function(User rhs) {
+    public Function(Function rhs) {
         super(rhs);
+        this.isPure = rhs.isPure;
+        this.isRecursive = rhs.isRecursive;
+        this.list = rhs.list;
+        this.params.addAll(rhs.params);
+    }
+
+    public void forEveryBasicBlock(Consumer<BasicBlock> f) {
+        for (MyNode<BasicBlock> bbNode :
+                list) {
+            BasicBlock bb = bbNode.getValue();
+            f.accept(bb);
+        }
     }
 
     @Override

@@ -23,6 +23,11 @@ public class Param extends Value {
     public Param(Ty type) {
         super(new LinkedList<>(), type);
     }
+
+    public Param(Param rhs) {
+        super(rhs);
+        this.isLoadStore = rhs.isLoadStore;
+    }
     public static List<Ty> extractType(List<Param> params) {
         List<Ty> ret = new ArrayList<>();
         for (Param p :

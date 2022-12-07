@@ -160,6 +160,9 @@ public class ColorAllocator {
                 if (instr instanceof MCLw && ((MCLw) instr).isLoadArg) {
                     ((MCLw) instr).numOffset += function.stackSlot * 4;
                 }
+                if (instr instanceof MCSw && ((MCSw) instr).isLoadArg) {
+                    ((MCSw) instr).numOffset += function.stackSlot * 4;
+                }
             }
         }
 
@@ -232,6 +235,7 @@ public class ColorAllocator {
                         iGraph.addEdge(reg2Node(r), reg2Node(l));
                     }
                 }
+
                 live.removeAll(instr.getDef());
                 live.addAll(instr.getUse());
                 live.removeAll(PReg.getSpRegs());
@@ -285,11 +289,11 @@ public class ColorAllocator {
             if (u != v /*&& !adjSet.contains(new IGEdge(u, v))*/) {
                 //adjSet.add(new IGEdge(u, v));
                 //adjSet.add(new IGEdge(v, u));
-                if (!precolored.contains(u)) {
+                if (!precolored.contains(u) && !u.edges.contains(v)) {
                     u.edges.add(v);
                     u.degree += 1;
                 }
-                if (!precolored.contains(v)) {
+                if (!precolored.contains(v) && !v.edges.contains(u)) {
                     v.edges.add(u);
                     v.degree += 1;
                 }
@@ -495,7 +499,8 @@ public class ColorAllocator {
     private void selectSpill() {
         //Optional<IGNode> t = spillWorkList.stream().filter(n -> !spillCreated.contains(n)).findAny(); // 应该用启发式算法取
         //IGNode m = t.get();
-        IGNode m = spillWorkList.stream().min((node1, node2) -> {
+
+        IGNode m = spillWorkList.stream().filter(n -> !spillCreated.contains(n)).min((node1, node2) -> {
             double t = spillPRT.get(node1.reg) / node1.degree - spillPRT.get(node2.reg) / node2.degree;
             if (t < 0) {
                 return -1;
@@ -526,7 +531,20 @@ public class ColorAllocator {
                 spilledNodes.add(n);
             } else {
                 coloredNodes.add(n);
-                PReg c = okColors.iterator().next();
+                PReg c;
+                if (AyaConfig.CALLER_SAVED) {
+                    Set<PReg> t= new HashSet<>(okColors);
+                    t.removeIf(r -> !PReg.getTRegCallerSaved().contains(r));
+                    if (!t.isEmpty()) {
+                        c = t.iterator().next();
+                    } else {
+                        c = okColors.stream().sorted((r1, r2)-> -(r1.id - r2.id)).iterator().next(); // 倾向于使用后面的寄存器
+                    }
+                    //c = okColors.stream().sorted((r1, r2)-> -(r1.id - r2.id)).iterator().next();
+                } else {
+                    c = okColors.stream().sorted((r1, r2)-> -(r1.id - r2.id)).iterator().next(); // 倾向于使用后面的寄存器
+                }
+
                 n.color = c;
             }
         }
@@ -544,9 +562,16 @@ public class ColorAllocator {
         Set<IGNode> newTemp = new HashSet<>();
         for (IGNode n :
                 spilledNodes) {
-            function.stackSlot++;
-            spilledVarCnt++;
             Reg r = n.reg;
+            int slotOffset;
+            if (!r.isLoadAsParam) {
+                function.stackSlot++;
+                spilledVarCnt++;
+                slotOffset = spilledVarCnt * 4 + function.stackTop * 4;
+            } else {
+                slotOffset = r.loadInstr.numOffset;
+            }
+
             for (MyNode<MCBlock> bbNode : function.list) {
                 for (MCInstr instr : bbNode.getValue().list.toList()) {
                     VReg t = new VReg(233);
@@ -562,8 +587,11 @@ public class ColorAllocator {
                         try {
                             MCLw lw = new MCLw(PReg.getRegByName("sp"),
                                     t,
-                                    spilledVarCnt * 4 + function.stackTop * 4
+                                    slotOffset
                             );
+                            if (r.isLoadAsParam) {
+                                lw.isLoadArg = true;
+                            }
                             instr.getNode().insertBefore(lw.getNode());
                         } catch (BackEndErr e) {
                             throw new RuntimeException(e);
@@ -573,8 +601,11 @@ public class ColorAllocator {
                         try {
                             MCSw sw = new MCSw(PReg.getRegByName("sp"),
                                     t,
-                                    spilledVarCnt * 4 + function.stackTop * 4
+                                    slotOffset
                             );
+                            if (r.isLoadAsParam) {
+                                sw.isLoadArg = true;
+                            }
                             instr.getNode().insertAfter(sw.getNode());
 
                         } catch (BackEndErr e) {

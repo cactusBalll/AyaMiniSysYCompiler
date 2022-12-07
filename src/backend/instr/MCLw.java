@@ -42,6 +42,13 @@ public class MCLw extends MCInstr{
     @Override
     public String toString() {
         if (offset != null) {
+            if (s == PReg.getZero()) {
+                if (numOffset == 0) {
+                    return String.format("lw %s,%s",t,offset.name);
+                } else {
+                    return String.format("lw %s,%s+%d",t,offset.name,numOffset);
+                }
+            }
             if (numOffset == 0) {
                 return String.format("lw %s,%s(%s)",t,offset.name,s);
             } else {

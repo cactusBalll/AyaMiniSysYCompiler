@@ -17,6 +17,8 @@ public class MCSw extends MCInstr{
     public Reg t;
     public Label offset;
 
+    public boolean isLoadArg = false;
+
     public MCSw(Reg s, Reg t, Label offset) {
         this.s = s;
         this.t = t;
@@ -40,6 +42,13 @@ public class MCSw extends MCInstr{
     @Override
     public String toString() {
         if (offset != null) {
+            if (s == PReg.getZero()) {
+                if (numOffset == 0) {
+                    return String.format("sw %s,%s",t,offset.name);
+                } else {
+                    return String.format("sw %s,%s+%d",t,offset.name,numOffset);
+                }
+            }
             if (numOffset == 0) {
                 return String.format("sw %s,%s(%s)",t,offset.name,s);
             } else {

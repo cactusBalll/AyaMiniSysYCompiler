@@ -1,5 +1,6 @@
 package backend;
 
+import Driver.AyaConfig;
 import backend.instr.*;
 import backend.regs.PReg;
 import backend.regs.Reg;
@@ -44,6 +45,7 @@ public class DivOpt {
         mcbb.list.add(mcInstr.getNode());
 
     }
+
     public static void genSignedDiv(MCBlock mcbb, BinaryOp divInstr, VReg dest) throws BackEndErr {
         assert divInstr.getRight() instanceof InitVal;
         assert divInstr.getOpType() == BinaryOp.OpType.Div;
@@ -74,7 +76,6 @@ public class DivOpt {
 
             mcInstr = new MCInstrI(dest, v2, l, MCInstrI.Type.sra);
             mcbb.list.add(mcInstr.getNode());
-
         } else {
             long nc = ((long) 1 << 31) - (((long) 1 << 31) % abs) - 1;
             long p = 32;
@@ -86,7 +87,7 @@ public class DivOpt {
             int shift = (int) (p - 32);
 
             VReg v = VReg.alloc();
-            MCInstr instr = new MCLi(n,v);
+            MCInstr instr = new MCLi(n, v);
             mcbb.list.add(instr.getNode());
             VReg v2 = VReg.alloc();
             if (m >= 2147483648L) {

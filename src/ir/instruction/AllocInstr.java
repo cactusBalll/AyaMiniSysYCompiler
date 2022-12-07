@@ -53,8 +53,12 @@ public class AllocInstr extends Instr{
         super(users, type);
     }
 
-    public AllocInstr(User rhs) {
+    public AllocInstr(AllocInstr rhs) {
         super(rhs);
+        this.allocType = rhs.allocType;
+        this.allocTy = rhs.allocTy;
+        this.initVal = rhs.initVal;
+
     }
 
     public AllocInstr(Ty type, String name) {

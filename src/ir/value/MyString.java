@@ -9,6 +9,10 @@ public class MyString extends Value{
         this.str = str;
     }
 
+    public MyString(MyString rhs) {
+        super(rhs);
+        str = rhs.str;
+    }
     public String getStr() {
         return str;
     }

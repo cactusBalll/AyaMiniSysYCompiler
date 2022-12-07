@@ -12,6 +12,8 @@ public class GVNGCM implements Pass{
     private Map<ArrView.Wrapper, ArrView> arrViewComputed = new HashMap<>();
 
     private Map<CallInstr.Wrapper, CallInstr> pureCallComputed = new HashMap<>();
+
+    private List<LoadInstr> localLoads = new ArrayList<>(); //局部加载指令可能可以公共子表达式删除
     private Set<BasicBlock> visited = new HashSet<>();
 
     private Set<Instr> instrVisited = new HashSet<>();
@@ -42,6 +44,7 @@ public class GVNGCM implements Pass{
      * @param basicBlock 当前基本块
      */
     private void RPOwalkFunction(BasicBlock basicBlock) {
+        localLoads.clear();
         visited.add(basicBlock);
         List<Instr> toRemove = new ArrayList<>();
         for (MyNode<Instr> instrNode:
@@ -69,6 +72,7 @@ public class GVNGCM implements Pass{
             }
             if (instr instanceof CallInstr) {
                 CallInstr callInstr = (CallInstr) instr;
+                localLoads.clear();
                 if (callInstr.getFunction().isPure()) {
                     if (pureCallComputed.containsKey(callInstr.getWrapper())) {
                         CallInstr subs = pureCallComputed.get(callInstr.getWrapper());
@@ -78,6 +82,42 @@ public class GVNGCM implements Pass{
                     }else {
                         pureCallComputed.put(callInstr.getWrapper(), callInstr);
                     }
+                }
+            }
+            if (instr instanceof StoreInstr) {
+                StoreInstr storeInstr = (StoreInstr) instr;
+                if (storeInstr.getPtr() instanceof Param) { // 对参数存，可能改变任意Mem位置
+                    localLoads.clear();
+                }
+                if (storeInstr.getPtr() instanceof AllocInstr) {
+                    localLoads.removeIf(loadInstr -> loadInstr.getPtr() == storeInstr.getPtr());
+                }
+                if (storeInstr.getPtr() instanceof ArrView) {
+                    Value v = resolveArrView((ArrView) storeInstr.getPtr());
+                    if (v instanceof AllocInstr) {
+                        localLoads.removeIf(loadInstr -> loadInstr.getPtr() == v);
+                    }
+                    if (v instanceof Param) {
+                        localLoads.clear();
+                    }
+                }
+            }
+            if (instr instanceof LoadInstr) {
+                LoadInstr loadInstr = null;
+                for (LoadInstr l :
+                        localLoads) {
+                    if (l.getPtr() == ((LoadInstr) instr).getPtr() &&
+                            l.getIndexes() == ((LoadInstr) instr).getIndexes()) {
+                        loadInstr = l;
+                        break;
+                    }
+                }
+                if (loadInstr != null) {
+                    instr.replaceAllUsesOfMeWith(loadInstr);
+                    instr.removeMeFromAllMyUses();
+                    toRemove.add(instr);
+                } else {
+                    localLoads.add((LoadInstr) instr);
                 }
             }
         }
@@ -90,6 +130,13 @@ public class GVNGCM implements Pass{
         }
     }
 
+    private Value resolveArrView(ArrView arrView) {
+        Value t = arrView;
+        while (t instanceof ArrView) {
+            t = ((ArrView) t).getArr();
+        }
+        return t;
+    }
     private void GCMOnFunction(Function function) {
         instrVisited.clear();
         block.clear();

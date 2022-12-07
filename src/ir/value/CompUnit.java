@@ -55,6 +55,11 @@ public class CompUnit {
     }
     public void maintainUser() {
         forEveryInstr(instr -> instr.users.clear());
+        forEveryFunction(function -> function.users.clear());
+        for (MyNode<AllocInstr> allocNode:
+             globalValueList) {
+            allocNode.getValue().users.clear();
+        }
         for (MyNode<Function> funcNode :
                 list) {
             Function func = funcNode.getValue();

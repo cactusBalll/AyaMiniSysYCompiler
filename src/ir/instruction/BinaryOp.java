@@ -94,8 +94,9 @@ public class BinaryOp extends Instr {
         super(users, type);
     }
 
-    public BinaryOp(User rhs) {
+    public BinaryOp(BinaryOp rhs) {
         super(rhs);
+        this.opType = rhs.opType;
     }
 
     public BinaryOp(Ty type, String name) {

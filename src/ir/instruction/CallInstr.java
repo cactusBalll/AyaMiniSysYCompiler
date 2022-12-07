@@ -42,7 +42,7 @@ public class CallInstr extends Instr{
         super(users, type);
     }
 
-    public CallInstr(User rhs) {
+    public CallInstr(CallInstr rhs) {
         super(rhs);
     }
 

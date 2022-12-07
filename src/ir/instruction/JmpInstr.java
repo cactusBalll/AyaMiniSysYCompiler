@@ -27,8 +27,9 @@ public class JmpInstr extends Instr{
         super(users, type);
     }
 
-    public JmpInstr(User rhs) {
+    public JmpInstr(JmpInstr rhs) {
         super(rhs);
+
     }
 
     public JmpInstr(Ty type, String name) {

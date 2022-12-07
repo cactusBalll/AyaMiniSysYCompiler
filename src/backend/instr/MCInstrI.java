@@ -1,5 +1,6 @@
 package backend.instr;
 
+import Driver.AyaConfig;
 import backend.regs.PReg;
 import backend.regs.Reg;
 
@@ -67,6 +68,9 @@ public class MCInstrI extends MCInstr {
 
     @Override
     public String toString() {
+        if (AyaConfig.NO_IMM16_CHECK && type == Type.addu) {
+            return String.format("addiu %s,%s,%d", t, s, imm);
+        }
         return String.format("%s %s,%s,%d", type, t, s, imm);
     }
 }

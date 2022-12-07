@@ -37,8 +37,9 @@ public class ArrView extends Instr{
         super(users, type);
     }
 
-    public ArrView(User rhs) {
+    public ArrView(ArrView rhs) {
         super(rhs);
+
     }
 
     public ArrView(Ty type, String name) {

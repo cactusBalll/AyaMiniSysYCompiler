@@ -118,45 +118,25 @@ public class CodeGen {
 
         MCStack push = new MCStack(0);
         b.list.add(push.getNode());
+
+        //保存ra
+        MCInstr mcInstr = new MCSw(
+                PReg.getRegByName("sp"),
+                PReg.getRegByName("ra"),
+                0
+        );
+        b.list.add(mcInstr.getNode());
+
         mcFunction.push = push;
         Set<Reg> pdef = new HashSet<>(); //def物理寄存器
         List<Reg> paramPassed = new ArrayList<>(); //传参的寄存器
         List<Reg> paramVReg = new ArrayList<>();
-        for (int i = 0; i < Math.min(4, f.getParams().size()); i++) {
-            Param p = f.getParams().get(i);
-            Reg r = VReg.alloc();
-            MCInstr instr = new MCMove(r, PReg.getRegById(4 + i));
-            b.list.add(instr.getNode()); // 添加参数寄存器到VReg的move
-            // 特殊用途寄存器的liverange要尽量段，防止产生大量spill
-            value2Reg.put(p, r);
-            pdef.add(PReg.getRegById(4 + i));
-            paramPassed.add(PReg.getRegById(4 + i));
-            paramVReg.add(r);
-        }
-        if (!Objects.equals(mcFunction.label.name, "main")) {
-            for (int i = f.getParams().size(); i < 4; i++) {
-                Reg r = VReg.alloc();
-                MCInstr instr = new MCMove(r, PReg.getRegById(4 + i));
-                b.list.add(instr.getNode()); // 添加参数寄存器到VReg的move
-
-                pdef.add(PReg.getRegById(4 + i));
-                paramPassed.add(PReg.getRegById(4 + i));
-                paramVReg.add(r);
-            }
-        }
-        if (f.getParams().size() > 4) { // 超出寄存器范围的参数
-            for (int i = 4; i < f.getParams().size(); i++) {
-                Param p = f.getParams().get(i);
-                Reg r = VReg.alloc();
-                MCLw instr = new MCLw(PReg.getRegByName("sp"), r, -i * 4 - 4);
-                instr.isLoadArg = true;
-                b.list.add(instr.getNode());
-                value2Reg.put(p, r);
-            }
-        }
-
         List<Reg> calleeSaved = new ArrayList<>();
         List<PReg> tRegs = PReg.getTRegsWithoutAn();
+        if (AyaConfig.CALLER_SAVED) {
+            tRegs = PReg.getTRegCalleeSaved();
+            tRegs.removeIf(pReg -> pReg.id >= 4 && pReg.id <= 7);
+        }
         //tRegs.remove(PReg.getRegByName("v0"));
         //main 不需要保存被调用者保存寄存器
         //全部让callee保护
@@ -169,6 +149,42 @@ public class CodeGen {
                 pdef.add(pr);
             }
         }
+        for (int i = 0; i < Math.min(4, f.getParams().size()); i++) {
+            Param p = f.getParams().get(i);
+            Reg r = VReg.alloc();
+            MCInstr instr = new MCMove(r, PReg.getRegById(4 + i));
+            b.list.add(instr.getNode()); // 添加参数寄存器到VReg的move
+            // 特殊用途寄存器的liverange要尽量段，防止产生大量spill
+            value2Reg.put(p, r);
+            pdef.add(PReg.getRegById(4 + i));
+            //paramPassed.add(PReg.getRegById(4 + i));
+            //paramVReg.add(r);
+        }
+        /*if (!Objects.equals(mcFunction.label.name, "main")) {
+            for (int i = f.getParams().size(); i < 4; i++) {
+                Reg r = VReg.alloc();
+                MCInstr instr = new MCMove(r, PReg.getRegById(4 + i));
+                b.list.add(instr.getNode()); // 添加参数寄存器到VReg的move
+
+                pdef.add(PReg.getRegById(4 + i));
+                paramPassed.add(PReg.getRegById(4 + i));
+                paramVReg.add(r);
+            }
+        }*/
+        if (f.getParams().size() > 4) { // 超出寄存器范围的参数
+            for (int i = 4; i < f.getParams().size(); i++) {
+                Param p = f.getParams().get(i);
+                Reg r = VReg.alloc();
+                r.isLoadAsParam = true; // 它们在栈上本来就有个位置，溢出的时候不需要选择新的位置
+                MCLw instr = new MCLw(PReg.getRegByName("sp"), r, -i * 4 - 4);
+                instr.isLoadArg = true;
+                r.loadInstr = instr;
+                b.list.add(instr.getNode());
+                value2Reg.put(p, r);
+            }
+        }
+
+
 
         MCNop nop = new MCNop(pdef, new HashSet<>());
         b.list.addFirst(nop.getNode());
@@ -638,16 +654,13 @@ public class CodeGen {
                 MCFunction mcFunc = funcMap.get(((CallInstr) instr).getFunction());
                 List<Value> params = ((CallInstr) instr).getParams();
                 MCInstr mcInstr;
-                //保存ra
-                mcInstr = new MCSw(
-                        PReg.getRegByName("sp"),
-                        PReg.getRegByName("ra"),
-                        0
-                );
-                mcbb.list.add(mcInstr.getNode());
+
+
+
 
                 Set<Reg> jalUse = new HashSet<>();
                 Set<Reg> jalDef = new HashSet<>();
+                Set<Reg> jalDefBefore = new HashSet<>();
                 // 压入调用实参
                 for (int i = 0; i < Math.min(params.size(), 4); i++) {
                     if (params.get(i) instanceof InitVal) {
@@ -662,14 +675,20 @@ public class CodeGen {
                                 PReg.getRegById(4 + i)
                         );
                     } else {
-                        mcInstr = new MCMove(
+                        mcInstr = new MCInstrR(
                                 PReg.getRegById(4 + i),
-                                new ValueReg(params.get(i))
+                                new ValueReg(params.get(i)),
+                                PReg.getRegById(0),
+                                MCInstrR.Type.addu
                         );
                     }
 
                     mcbb.list.add(mcInstr.getNode());
                     jalUse.add(PReg.getRegById(4 + i));
+                }
+                for (int i = params.size(); i < 4; i++) {
+                    jalUse.add(PReg.getRegById(4 + i));
+                    jalDefBefore.add(PReg.getRegById(4 + i));
                 }
                 for (int i = 4; i < params.size(); i++) {
                     if (params.get(i) instanceof InitVal) {
@@ -704,6 +723,7 @@ public class CodeGen {
 
                     mcbb.list.add(mcInstr.getNode());
                 }
+
                 MCInstr jal = new MCJal(mcFunc.headBB);
                 mcbb.list.add(jal.getNode());
                 VReg vReg = VReg.alloc();
@@ -714,13 +734,15 @@ public class CodeGen {
                 );
                 mcbb.list.add(mcInstr.getNode());
                 jalDef.add(PReg.getRegByName("v0"));
+                if (AyaConfig.CALLER_SAVED) {
+                    jalUse.addAll(PReg.getTRegCallerSaved());
+                    jal.getNode().insertBefore(
+                            new MCNop(new HashSet<>(PReg.getTRegCallerSaved()), new HashSet<>()).getNode());
+                }
                 jal.getNode().insertAfter(new MCNop(jalDef, jalUse).getNode());
-                mcInstr = new MCLw(
-                        PReg.getRegByName("sp"),
-                        PReg.getRegByName("ra"),
-                        0
-                );//加载ra
-                mcbb.list.add(mcInstr.getNode());
+                jal.getNode().insertBefore(new MCNop(jalDefBefore, new HashSet<>()).getNode());
+
+
                 value2Reg.put(instr, vReg);
 
                 //恢复ra
@@ -976,7 +998,10 @@ public class CodeGen {
 
                 Set<Reg> pused = new HashSet<>();
                 List<PReg> tRegs = PReg.getTRegsWithoutAn();
-
+                if (AyaConfig.CALLER_SAVED) {
+                    tRegs = PReg.getTRegCalleeSaved();
+                    tRegs.removeIf(pReg -> pReg.id >= 4 && pReg.id <= 7);
+                }
 
                 MCInstr mcInstr;
                 if (((RetInstr) instr).getRetValue() != null) {
@@ -1001,34 +1026,46 @@ public class CodeGen {
                 );
 
                 //tRegs.remove(PReg.getRegByName("v0"));
-                if (calleeSaved.size() != tRegs.size()) {
-                    throw new RuntimeException();
-                }
-                for (int i = 0; i < calleeSaved.size() ; i++) {
-                    Reg r = calleeSaved.get(i);
 
-                    MCInstr mcInstr2 = new MCMove(
-                            tRegs.get(i),
-                            r
-                    );
-                    mcbb.list.add(mcInstr2.getNode());
-                    pused.add(tRegs.get(i));
-                } // 恢复被调用者保护寄存器
-                for (int i = paramPassed.size()-1; i >= 0; i--) {
-                    Reg pReg = paramPassed.get(i);
-                    if (paramPassed.contains(pReg)) {
+                    if (calleeSaved.size() != tRegs.size()) {
+                        throw new RuntimeException();
+                    }
+                    for (int i = 0; i < calleeSaved.size() ; i++) {
+                        Reg r = calleeSaved.get(i);
+
                         MCInstr mcInstr2 = new MCMove(
-                                pReg,
-                                paramVReg.get(i)
+                                tRegs.get(i),
+                                r
                         );
                         mcbb.list.add(mcInstr2.getNode());
-                        pused.add(pReg);
+                        pused.add(tRegs.get(i));
+                    } // 恢复被调用者保护寄存器
+                    for (int i = paramPassed.size()-1; i >= 0; i--) {
+                        Reg pReg = paramPassed.get(i);
+                        if (paramPassed.contains(pReg)) {
+                            MCInstr mcInstr2 = new MCMove(
+                                    pReg,
+                                    paramVReg.get(i)
+                            );
+                            mcbb.list.add(mcInstr2.getNode());
+                            pused.add(pReg);
+                        }
                     }
-                }
+
+
+                mcInstr = new MCLw(
+                        PReg.getRegByName("sp"),
+                        PReg.getRegByName("ra"),
+                        0
+                );//加载ra
+                mcbb.list.add(mcInstr.getNode());
+
                 mcbb.list.add(pop.getNode());
                 mcbb.list.add(mcInstr1.getNode());
-                MCNop nop = new MCNop(new HashSet<>(), pused);
-                mcbb.list.add(nop.getNode());
+
+                    MCNop nop = new MCNop(new HashSet<>(), pused);
+                    mcbb.list.add(nop.getNode());
+
             }
         }
     }
@@ -1041,18 +1078,30 @@ public class CodeGen {
             case Add: {
                 MCInstr mcInstr = null;
                 if (left instanceof InitVal) {
+                    MCInstrI.Type type;
+                    if (isImm16(((InitVal) left).getValue())) {
+                        type = MCInstrI.Type.addiu;
+                    } else {
+                        type = MCInstrI.Type.addu;
+                    }
                     mcInstr = new MCInstrI(
                             vReg,
                             new ValueReg(right),
                             ((InitVal) left).getValue(),
-                            MCInstrI.Type.addu
+                            type
                     );
                 } else if (right instanceof InitVal) {
+                    MCInstrI.Type type;
+                    if (isImm16(((InitVal) right).getValue())) {
+                        type = MCInstrI.Type.addiu;
+                    } else {
+                        type = MCInstrI.Type.addu;
+                    }
                     mcInstr = new MCInstrI(
                             vReg,
                             new ValueReg(left),
                             ((InitVal) right).getValue(),
-                            MCInstrI.Type.addu
+                            type
                     );
                 } else {
                     mcInstr = new MCInstrR(
@@ -1070,7 +1119,6 @@ public class CodeGen {
                 MCInstr mcInstr1 = null;
                 Reg t = null;
                 if (left instanceof InitVal) { // 没有反向减法指令
-
                     mcInstr = new MCInstrI(
                             vReg,
                             new ValueReg(right),

@@ -18,8 +18,9 @@ public class Instr extends User {
         super(users, type);
     }
 
-    public Instr(User rhs) {
+    public Instr(Instr rhs) {
         super(rhs);
+        this.isNop = rhs.isNop;
     }
 
     public Instr(Ty type, String name) {

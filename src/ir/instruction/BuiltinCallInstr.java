@@ -28,6 +28,10 @@ public class BuiltinCallInstr extends Instr {
         return uses.get(0).getValue();
     }
 
+    public BuiltinCallInstr(BuiltinCallInstr rhs) {
+        super(rhs);
+        this.func = rhs.func;
+    }
     @Override
     public String toString() {
         switch (func) {

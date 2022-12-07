@@ -33,7 +33,7 @@ public class LoadInstr extends Instr{
         super(users, type);
     }
 
-    public LoadInstr(User rhs) {
+    public LoadInstr(LoadInstr rhs) {
         super(rhs);
     }
 

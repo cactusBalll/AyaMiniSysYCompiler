@@ -10,11 +10,13 @@ import java.util.*;
  */
 public class IGNode {
     public Reg reg;
-    public List<IGNode> edges = new ArrayList<>();
+    public Set<IGNode> edges = new HashSet<>();
     public int degree = 0;
     public IGNode alias;
     public PReg color;
     public Set<IGMove> moveList = new HashSet<>();
+
+    public boolean loadAsParam = false; // 4个之后的参数
 
     public IGNode(Reg reg) {
         this.reg = reg;

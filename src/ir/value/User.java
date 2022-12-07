@@ -6,7 +6,7 @@ import util.MyNode;
 import java.util.ArrayList;
 import java.util.LinkedList;
 
-public abstract class User extends Value{
+public abstract class User extends Value {
     protected LinkedList<MyNode<Value>> uses; //使用的值
 
     public User(LinkedList<MyNode<User>> users, ArrayList<Value> uses) {
@@ -23,14 +23,15 @@ public abstract class User extends Value{
         /*if (uses.remove(old.getNode())) {
             uses.add(nnew.getNode()); // 想办法绕过这个类型检查
         }*/
-        if (uses.contains(old.getNode())) {
+        while (uses.contains(old.getNode())) {
             old.users.remove(this.getNode());
             nnew.users.add((MyNode<User>) this.getNode());
             int idx = uses.indexOf(old.getNode());
             uses.remove(old.getNode());
-            uses.add(idx,nnew.getNode());
+            uses.add(idx, nnew.getNode());
         }
     }
+
     public void removeMeFromAllMyUses() {
         for (MyNode<Value> vNode :
                 uses) {
@@ -38,7 +39,6 @@ public abstract class User extends Value{
             v.getUsers().remove(this.getNode());
         }
     }
-
 
 
     public User(LinkedList<MyNode<User>> users, Ty type) {

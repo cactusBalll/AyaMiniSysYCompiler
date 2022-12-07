@@ -51,8 +51,14 @@ public class InitVal extends Value{
         super(users, type);
     }
 
+    /**
+     * should not be called.
+     * InitVal每个值只有一个实例
+     * @param rhs none
+     */
     public InitVal(Value rhs) {
         super(rhs);
+
     }
 
     public InitVal(Ty type, String name) {

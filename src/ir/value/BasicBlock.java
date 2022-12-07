@@ -27,6 +27,11 @@ public class BasicBlock extends Value{
     public List<BasicBlock> succ = new ArrayList<>();
 
     public int loopDepth;
+
+    public void setList(MyList<Instr> list) {
+        this.list = list;
+    }
+
     public void clearBBInfo() {
         idomer = null;
         idoming.clear();
@@ -41,7 +46,7 @@ public class BasicBlock extends Value{
         succ.clear();
     }
 
-    private final MyList<Instr> list = new MyList<>();
+    private MyList<Instr> list = new MyList<>();
 
     public MyList<Instr> getList() {
         return list;
@@ -63,8 +68,10 @@ public class BasicBlock extends Value{
         super(users, type);
     }
 
-    public BasicBlock(Value rhs) {
+    public BasicBlock(BasicBlock rhs) {
         super(rhs);
+        this.list = rhs.list;
+        this.loopDepth = rhs.loopDepth;
     }
 
     public BasicBlock(Ty type, String name) {

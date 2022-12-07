@@ -1,6 +1,7 @@
 package ir.instruction;
 
 import ir.value.BasicBlock;
+import ir.value.Param;
 import ir.value.User;
 import ir.value.Value;
 import ty.Ty;
@@ -43,7 +44,7 @@ public class PhiInstr extends Instr{
         super(users, type);
     }
 
-    public PhiInstr(User rhs) {
+    public PhiInstr(PhiInstr rhs) {
         super(rhs);
     }
 

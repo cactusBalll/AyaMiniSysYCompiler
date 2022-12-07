@@ -3,6 +3,7 @@ import backend.BakaAllocator;
 import backend.CodeGen;
 import backend.MCUnit;
 import backend.coloralloc.ColorAllocDriver;
+import backend.pass.CombineJmp;
 import backend.pass.Peephole;
 import backend.pass.RemoveJmp;
 import exceptions.BackEndErr;
@@ -62,14 +63,22 @@ public class Compiler {
             new PrecSucc().run(compUnit);
             compUnit.fullMaintain();
             new BBInfo().run(compUnit);
+            if (AyaConfig.OPT) {
+                new GlobalConst().run(compUnit);
+            }
             new Mem2Reg().run(compUnit);
 
             compUnit.maintainUser();
+
             new MarkFunc().run(compUnit);
             new SimpleCP().run(compUnit);
 
             compUnit.fullMaintain();
             if (AyaConfig.OPT) {
+                new FuncInline().run(compUnit);
+                compUnit.fullMaintain();
+                new InstrSimplify().run(compUnit);
+                compUnit.fullMaintain();
                 new SimplifyInstr().run(compUnit);
                 compUnit.fullMaintain();
                 new SimpleCP().run(compUnit);
@@ -97,6 +106,7 @@ public class Compiler {
             }
             if (AyaConfig.OPT) {
                 new Peephole().run(mcUnit);
+                new CombineJmp().run(mcUnit);
             }
 
 
@@ -139,6 +149,9 @@ public class Compiler {
             new PrecSucc().run(compUnit);
             compUnit.fullMaintain();
             new BBInfo().run(compUnit);
+            if (AyaConfig.OPT) {
+                new GlobalConst().run(compUnit);
+            }
             new Mem2Reg().run(compUnit);
 
             compUnit.maintainUser();
@@ -147,6 +160,10 @@ public class Compiler {
 
             compUnit.fullMaintain();
             if (AyaConfig.OPT) {
+                new FuncInline().run(compUnit);
+                compUnit.fullMaintain();
+                new InstrSimplify().run(compUnit);
+                compUnit.fullMaintain();
                 new SimplifyInstr().run(compUnit);
                 compUnit.fullMaintain();
                 new SimpleCP().run(compUnit);
@@ -175,6 +192,7 @@ public class Compiler {
             }
             if (AyaConfig.OPT) {
                 new Peephole().run(mcUnit);
+                new CombineJmp().run(mcUnit);
             }
             out = new PrintStream(MIPSTarget);
             System.setOut(out);

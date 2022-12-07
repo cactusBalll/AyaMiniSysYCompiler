@@ -21,32 +21,37 @@ public class CombineJmp implements MCPass{
             for (MyNode<MCBlock> bbNode :
                     func.list) {
                 MCBlock bb = bbNode.getValue();
-                List<MCInstr> brOrJmps = new ArrayList<>();
-                List<MCBlock> targets = new ArrayList<>();
                 for (MyNode<MCInstr> instrNode :
                         bb.list) {
                     MCInstr instr = instrNode.getValue();
                     if (instr instanceof MCJ) {
-                        brOrJmps.add(instr);
-                        targets.add(((MCJ) instr).target);
+                        MCJ mcj = (MCJ) instr;
+                        mcj.target = propTargets(mcj.target);
                     }
                     if (instr instanceof MCInstrB) {
-                        brOrJmps.add(instr);
-                        targets.add(((MCInstrB) instr).target);
+                        MCInstrB mcInstrB = (MCInstrB) instr;
+                        mcInstrB.target = propTargets(mcInstrB.target);
                     }
                 }
-                for (int i = 0; i < targets.size(); i++) {
-                    MCBlock target = targets.get(i);
-                    if (target.list.getSize() == 1 && target.list.getLast().getValue() instanceof MCJ) {
-                        MCJ indirectJ = (MCJ) target.list.getLast().getValue();
-
-                        ((MCJ) brOrJmps.get(i)).target = indirectJ.target;
-                        target.prec.remove(bb);
-                    }
-                }
-
-
             }
         }
+    }
+    private MCBlock propTargets(MCBlock mcBlock) {
+        MCBlock ret = mcBlock;
+        MCBlock last;
+        do {
+            last = ret;
+            ret = propTarget(ret);
+        } while (last != ret);
+        return ret;
+    }
+    private MCBlock propTarget(MCBlock mcBlock) {
+        if (mcBlock.list.getSize() == 1) {
+            MCInstr instr = mcBlock.list.getFirst().getValue();
+            if (instr instanceof MCJ) {
+                return ((MCJ) instr).target;
+            }
+        }
+        return mcBlock;
     }
 }

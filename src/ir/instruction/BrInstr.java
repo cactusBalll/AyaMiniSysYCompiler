@@ -38,7 +38,7 @@ public class BrInstr extends Instr{
         super(users, type);
     }
 
-    public BrInstr(User rhs) {
+    public BrInstr(BrInstr rhs) {
         super(rhs);
     }
 

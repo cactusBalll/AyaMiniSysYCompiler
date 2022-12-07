@@ -40,8 +40,9 @@ public class RetInstr extends Instr{
         super(users, type);
     }
 
-    public RetInstr(User rhs) {
+    public RetInstr(RetInstr rhs) {
         super(rhs);
+        this.isRetNull = rhs.isRetNull;
     }
 
     public RetInstr(Ty type, String name) {
