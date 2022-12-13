@@ -81,6 +81,8 @@ public class Compiler {
                 compUnit.fullMaintain();
                 new SimplifyInstr().run(compUnit);
                 compUnit.fullMaintain();
+                new ContinuousAdd().run(compUnit);
+                compUnit.fullMaintain();
                 new SimpleCP().run(compUnit);
                 compUnit.fullMaintain();
             }
@@ -89,6 +91,13 @@ public class Compiler {
             if (AyaConfig.OPT) {
 
                 new GVNGCM().run(compUnit);
+                compUnit.fullMaintain();
+                new SimplifyInstr().run(compUnit);
+                compUnit.fullMaintain();
+                new ContinuousAdd().run(compUnit);
+                compUnit.fullMaintain();
+                new SimpleCP().run(compUnit);
+                compUnit.fullMaintain();
             }
 
 
@@ -166,6 +175,8 @@ public class Compiler {
                 compUnit.fullMaintain();
                 new SimplifyInstr().run(compUnit);
                 compUnit.fullMaintain();
+                new ContinuousAdd().run(compUnit);
+                compUnit.fullMaintain();
                 new SimpleCP().run(compUnit);
                 compUnit.fullMaintain();
             }
@@ -173,6 +184,13 @@ public class Compiler {
             new BBInfo().run(compUnit);
 
             new GVNGCM().run(compUnit);
+            compUnit.fullMaintain();
+            new SimplifyInstr().run(compUnit);
+            compUnit.fullMaintain();
+            new ContinuousAdd().run(compUnit);
+            compUnit.fullMaintain();
+            new SimpleCP().run(compUnit);
+            compUnit.fullMaintain();
 
             compUnit.setValueName();
             System.out.print(compUnit);

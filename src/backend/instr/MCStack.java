@@ -38,7 +38,7 @@ public class MCStack extends MCInstr{
     @Override
     public String toString() {
         try {
-            return String.format("addu %s,%s,%d", PReg.getRegByName("sp"),PReg.getRegByName("sp"), offset);
+            return String.format("addiu %s,%s,%d", PReg.getRegByName("sp"),PReg.getRegByName("sp"), offset);
         } catch (BackEndErr e) {
             throw new RuntimeException(e);
         }

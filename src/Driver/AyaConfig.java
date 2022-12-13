@@ -11,7 +11,7 @@ public class AyaConfig {
 
     public static int MAX_INLINE_LENGTH = 64;
 
-    public static boolean AGGRESSIVE_INLINE = false;
+    public static boolean AGGRESSIVE_INLINE = true;
 
     public static boolean AGGRESSIVE_DIVCNST = true; //激进优化除法，不管溢出行为
 

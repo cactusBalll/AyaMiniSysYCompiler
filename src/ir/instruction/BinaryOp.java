@@ -13,6 +13,10 @@ import java.util.Objects;
 public class BinaryOp extends Instr {
     private OpType opType;
 
+    public void setOpType(OpType opType) {
+        this.opType = opType;
+    }
+
     public OpType getOpType() {
         return opType;
     }
