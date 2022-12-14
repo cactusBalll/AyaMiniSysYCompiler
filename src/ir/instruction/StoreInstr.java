@@ -1,5 +1,6 @@
 package ir.instruction;
 
+import ir.value.InitVal;
 import ir.value.User;
 import ir.value.Value;
 import ty.Ty;
@@ -48,5 +49,10 @@ public class StoreInstr extends Instr{
     @Override
     public String toString() {
         return "store " + getTarget().getName() + ','+ getPtr().getName() +'['+getIndex().getName()+']';
+    }
+
+    public void setTarget(Value v) {
+        this.uses.remove(1);
+        this.uses.add(1, v.getNode());
     }
 }

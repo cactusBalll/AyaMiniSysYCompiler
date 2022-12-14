@@ -18,4 +18,21 @@ public class AyaConfig {
     public static boolean CALLER_SAVED = true;
 
     public static boolean NO_IMM16_CHECK = true;
+
+    public static String builtinFunc = "int __OPT_fib(int i) {\n" +
+            "    int a = 1;\n" +
+            "    int b = 2;\n" +
+            "    int j = 0;\n" +
+            "    while (j < (i-1) / 2) {\n" +
+            "        a = a + b;\n" +
+            "        b = a + b;\n" +
+            "        j = j + 1;\n" +
+            "    }\n" +
+            "    if (i % 2 == 1) {\n" +
+            "        return a;\n" +
+            "    } else {\n" +
+            "        return b;\n" +
+            "    }\n" +
+            "    return 0;\n" +
+            "}";
 }

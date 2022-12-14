@@ -40,19 +40,26 @@ public class IRGen {
             TreeNode node = children.get(i);
             NonTerminator nonTerminator = (NonTerminator) node;
             if (nonTerminator.getType() != NonTerminator.Type.ConstDecl &&
-                    nonTerminator.getType() != NonTerminator.Type.VarDecl) {
+                    nonTerminator.getType() != NonTerminator.Type.VarDecl &&
+                    nonTerminator.getType() != NonTerminator.Type.FuncDef) {
                 break;
             }
-            genDecl(nonTerminator, false);
+            if (nonTerminator.getType() == NonTerminator.Type.ConstDecl ||
+                    nonTerminator.getType() == NonTerminator.Type.VarDecl) {
+                genDecl(nonTerminator, false);
+            } else {
+                genFunction(nonTerminator);
+            }
+
         }
-        for (; i < children.size(); i++) {
+        /*for (; i < children.size(); i++) {
             TreeNode node = children.get(i);
             NonTerminator nonTerminator = (NonTerminator) node;
             if (nonTerminator.getType() != NonTerminator.Type.FuncDef) {
                 break;
             }
             genFunction(nonTerminator);
-        }
+        }*/
 
         TreeNode node = children.get(i);
         NonTerminator nonTerminator = (NonTerminator) node;

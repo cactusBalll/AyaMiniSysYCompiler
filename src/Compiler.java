@@ -35,6 +35,9 @@ public class Compiler {
         final String MIPSTarget = "mips.txt";
         final String errTarget = "error.txt";
         StringBuilder src = new StringBuilder();
+        if (AyaConfig.OPT) {
+            src.append(AyaConfig.builtinFunc);
+        }
         try (Reader reader = new FileReader(srcFile)) {
             int c;
             while ((c = reader.read()) != -1) {
@@ -65,6 +68,8 @@ public class Compiler {
             new BBInfo().run(compUnit);
             if (AyaConfig.OPT) {
                 new GlobalConst().run(compUnit);
+                new RecFuncIdiom().run(compUnit);
+                compUnit.fullMaintain();
             }
             new Mem2Reg().run(compUnit);
 
@@ -129,6 +134,9 @@ public class Compiler {
         final String IRTarget = "ir.txt";
         final String errTarget = "error.txt";
         StringBuilder src = new StringBuilder();
+        if (AyaConfig.OPT) {
+            src.append(AyaConfig.builtinFunc);
+        }
         try (Reader reader = new FileReader(srcFile)) {
             int c;
             while ((c = reader.read()) != -1) {
@@ -160,6 +168,8 @@ public class Compiler {
             new BBInfo().run(compUnit);
             if (AyaConfig.OPT) {
                 new GlobalConst().run(compUnit);
+                new RecFuncIdiom().run(compUnit);
+                compUnit.fullMaintain();
             }
             new Mem2Reg().run(compUnit);
 

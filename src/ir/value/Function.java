@@ -1,5 +1,6 @@
 package ir.value;
 
+import ir.instruction.AllocInstr;
 import ty.FuncTy;
 import ty.Ty;
 import util.MyList;
@@ -14,6 +15,8 @@ public class Function extends User{
 
     private boolean isPure = false;
     private boolean isRecursive = false;
+
+    public AllocInstr retAlloc = null; // load store 形式中返回值分配位置
 
     public void setPure(boolean pure) {
         isPure = pure;

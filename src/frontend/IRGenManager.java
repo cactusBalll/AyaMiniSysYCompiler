@@ -70,6 +70,7 @@ public class IRGenManager {
         addBB(retBB);
         RetInstr ret = null;
         if (retAlloc != null) {
+            nwFunction.retAlloc = (AllocInstr) retAlloc;
             LoadInstr loadInstr = genLoadInstr(retAlloc, InitVal.buildInitVal(0));
             ret = new RetInstr((Value) loadInstr);
         } else {

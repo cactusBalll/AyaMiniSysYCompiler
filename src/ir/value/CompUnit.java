@@ -49,6 +49,16 @@ public class CompUnit {
             }
         }
     }
+
+    public Function getFunctionOfName(String name) {
+        for (MyNode<Function> funcNode :
+                list) {
+            if (funcNode.getValue().getName().equals(name)) {
+                return funcNode.getValue();
+            }
+        }
+        return null;
+    }
     public void fullMaintain() {
         maintainUser();
         maintainBBelong();

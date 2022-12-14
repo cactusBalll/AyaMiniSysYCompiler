@@ -110,15 +110,20 @@ public class Parser {
     }
 
     private void compUnit() throws ParseErr{
-        while (peekE(2).getType() != Token.Type.LPARENT) {
+        /*while (peekE(2).getType() != Token.Type.LPARENT) {
             //intoNonTerminator(NonTerminator.Type.Decl);
             decl();
             //outNonTerminator();
-        }
+        }*/
         while (peekE(1).getType() != Token.Type.MAINTK) {
-            intoNonTerminator(NonTerminator.Type.FuncDef);
-            funcDef();
-            outNonTerminator();
+            if (peekE(2).getType() != Token.Type.LPARENT) {
+                decl();
+            } else {
+                intoNonTerminator(NonTerminator.Type.FuncDef);
+                funcDef();
+                outNonTerminator();
+            }
+
         }
         intoNonTerminator(NonTerminator.Type.MainFuncDef);
         mainFuncDef();

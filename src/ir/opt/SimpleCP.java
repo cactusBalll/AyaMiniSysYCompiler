@@ -3,6 +3,7 @@ package ir.opt;
 import Driver.AyaConfig;
 import ir.instruction.*;
 import ir.value.CompUnit;
+import ir.value.Function;
 import ir.value.InitVal;
 import ir.value.Value;
 
@@ -167,7 +168,14 @@ public class SimpleCP implements Pass {
 
     @Override
     public void run(CompUnit compUnit) {
+
         if (AyaConfig.OPT) {
+            for (Function function  :
+                compUnit.getList().toList()) {
+                if (function.getUsers().isEmpty() && !function.getName().equals("main")) {
+                    function.getNode().removeMe();
+                }
+            }
             addAllInstr(compUnit);
             simpleDCE();
         }
