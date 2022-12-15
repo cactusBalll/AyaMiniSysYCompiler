@@ -7,7 +7,7 @@ public class AyaConfig {
 
     public static double Spill_PARAM = 5.14;
 
-    public static boolean OPT = true; // 优化开关
+    public static boolean OPT = false; // 优化开关
 
     public static int MAX_INLINE_LENGTH = 64;
 

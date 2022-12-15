@@ -170,12 +170,12 @@ public class SimpleCP implements Pass {
     public void run(CompUnit compUnit) {
 
         if (AyaConfig.OPT) {
-            for (Function function  :
+            /*for (Function function  :
                 compUnit.getList().toList()) {
                 if (function.getUsers().isEmpty() && !function.getName().equals("main")) {
                     function.getNode().removeMe();
                 }
-            }
+            }*/
             addAllInstr(compUnit);
             simpleDCE();
         }

@@ -22,8 +22,8 @@ public class Compiler {
     public static void main(String[] argv) throws Exception {
 
         //try {
-            //emitMIPS(argv[0],argv[1]);
-            emitMIPSSubmit();
+            emitMIPS(argv[0],argv[1]);
+            //emitMIPSSubmit();
         //} catch (LexErr|ParseErr|IRGenErr e) {
         //    System.out.println("error occurred");
         //}
@@ -68,7 +68,7 @@ public class Compiler {
             new BBInfo().run(compUnit);
             if (AyaConfig.OPT) {
                 new GlobalConst().run(compUnit);
-                new RecFuncIdiom().run(compUnit);
+                //new RecFuncIdiom().run(compUnit);
                 compUnit.fullMaintain();
             }
             new Mem2Reg().run(compUnit);
@@ -88,6 +88,7 @@ public class Compiler {
                 compUnit.fullMaintain();
                 new ContinuousAdd().run(compUnit);
                 compUnit.fullMaintain();
+
                 new SimpleCP().run(compUnit);
                 compUnit.fullMaintain();
             }
@@ -101,7 +102,15 @@ public class Compiler {
                 compUnit.fullMaintain();
                 new ContinuousAdd().run(compUnit);
                 compUnit.fullMaintain();
+                new RecFuncIdiom2().run(compUnit);
+                compUnit.fullMaintain();
+                new FuncInline().run(compUnit);
+                compUnit.fullMaintain();
+                new PrecSucc().run(compUnit);
+                new BBInfo().run(compUnit);
                 new SimpleCP().run(compUnit);
+                compUnit.fullMaintain();
+                new RemoveNoUserFunc().run(compUnit);
                 compUnit.fullMaintain();
             }
 
@@ -168,7 +177,7 @@ public class Compiler {
             new BBInfo().run(compUnit);
             if (AyaConfig.OPT) {
                 new GlobalConst().run(compUnit);
-                new RecFuncIdiom().run(compUnit);
+                //new RecFuncIdiom().run(compUnit);
                 compUnit.fullMaintain();
             }
             new Mem2Reg().run(compUnit);
@@ -199,7 +208,15 @@ public class Compiler {
             compUnit.fullMaintain();
             new ContinuousAdd().run(compUnit);
             compUnit.fullMaintain();
+            new RecFuncIdiom2().run(compUnit);
+            compUnit.fullMaintain();
+            new FuncInline().run(compUnit);
+            compUnit.fullMaintain();
+            new PrecSucc().run(compUnit);
+            new BBInfo().run(compUnit);
             new SimpleCP().run(compUnit);
+            compUnit.fullMaintain();
+            new RemoveNoUserFunc().run(compUnit);
             compUnit.fullMaintain();
 
             compUnit.setValueName();

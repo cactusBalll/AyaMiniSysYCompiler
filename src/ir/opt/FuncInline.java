@@ -187,12 +187,12 @@ public class FuncInline implements Pass{
 
         });
         compUnit.fullMaintain();
-        for (MyNode<Function> funcNode :
+        /*for (MyNode<Function> funcNode :
                 inlinedFunctions) {
             if (funcNode.getValue().getUsers().isEmpty()) {
                 funcNode.removeMe();
             }
-        }
+        }*/
     }
     private RetInstr findRet(Function function) {
         // ret 大概率在最后一个基本块

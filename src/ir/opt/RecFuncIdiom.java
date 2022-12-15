@@ -78,10 +78,10 @@ public class RecFuncIdiom implements Pass{
                     }
                     toReplace.add(function);
                     BasicBlock bb = (BasicBlock) critic.getNode().getPrev().getValue();
-                    if (!(bb.getList().getFirst().getValue() instanceof StoreInstr)) {
+                    if (!(bb.getList().getLast().getPrev().getValue() instanceof StoreInstr)) {
                         return;
                     }
-                    storeInstr = (StoreInstr) bb.getList().getFirst().getValue();
+                    storeInstr = (StoreInstr) bb.getList().getLast().getPrev().getValue();
                     if (storeInstr.getPtr() != function.retAlloc) {
                         return;
                     }
@@ -91,10 +91,10 @@ public class RecFuncIdiom implements Pass{
                     param2 = ((InitVal) storeInstr.getTarget()).getValue();
 
                     bb = (BasicBlock) bb.getNode().getPrev().getPrev().getValue();
-                    if (!(bb.getList().getFirst().getValue() instanceof StoreInstr)) {
+                    if (!(bb.getList().getLast().getPrev().getValue() instanceof StoreInstr)) {
                         return;
                     }
-                    storeInstr = (StoreInstr) bb.getList().getFirst().getValue();
+                    storeInstr = (StoreInstr) bb.getList().getLast().getPrev().getValue();
                     if (storeInstr.getPtr() != function.retAlloc) {
                         return;
                     }
