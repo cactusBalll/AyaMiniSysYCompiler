@@ -155,3 +155,110 @@ l3:
 ## 代码优化
 
 此部分将作为独立的优化文章，这里只做简要介绍。
+
+优化由于作为可以开关和调整顺序的Pass，完成前就设计好的结构，只需要分别实现各个Pass即可。整个过程中架构没有发生修改。
+
+### IR实现
+
+模仿LLVM IR实现的Value和User的继承结构是IR实现的核心，是各种优化的基础。
+
+```mermaid
+classDiagram
+direction BT
+class AllocInstr
+class ArrView
+class BasicBlock
+class BinaryOp
+class BrInstr
+class BuiltinCallInstr
+class CallInstr
+class CompUnit
+class Constant
+class Function
+class IRCloner
+class InitVal
+class Instr
+class JmpInstr
+class LoadInstr
+class MyString
+class Param
+class PhiInstr
+class RetInstr
+class StoreInstr
+class Undef
+class User
+class Value
+
+AllocInstr  -->  Instr 
+ArrView  -->  Instr 
+BasicBlock  -->  Value 
+BinaryOp  -->  Instr 
+BrInstr  -->  Instr 
+BuiltinCallInstr  -->  Instr 
+CallInstr  -->  Instr 
+Function  -->  User 
+InitVal  -->  Value 
+Instr  -->  User 
+JmpInstr  -->  Instr 
+LoadInstr  -->  Instr 
+MyString  -->  Value 
+Param  -->  Value 
+PhiInstr  -->  Instr 
+RetInstr  -->  Instr 
+StoreInstr  -->  Instr 
+Undef  -->  Value 
+User  -->  Value 
+
+```
+
+User顾名思义就是会使用其他值的值（它也继承值，User也可能被使用）。
+
+例如，Instruction是User，对于一个二元运算指令BinaryOp，它use它的两个操作数，并被使用它的结果的指令使用，IR需要维护一个值的使用者和使用信息，比如
+
+```
+%1 = add 1, 1
+%2 = add 2, 2
+%3 = add %1, %2
+%4 = add %3, %2
+```
+
+对于`%3 = add %1, %2` 它维护了对第一行和第二行的指令的引用，并且因为它被第四行代码使用，它也维护了对第四行指令的引用，即
+
+```
+Object %3{
+	uses: [%1, %2]
+	users: [%4]
+}
+```
+
+这种形式可以方便优化，这里还有几个在Value和User上的方法：
+
+```
+void replaceUseWith(Value old, Value nnew)
+void removeMeFromAllMyUses() 
+void replaceAllUsesOfMeWith(Value other)
+```
+
+分别为：1.将对旧值的使用替换为新值，2.从使用的值的users列表中移出自己，通常用于这个值被删除了（比如死代码）3.将对自己的使用替换为对另一个值的使用，通常用于值标号合并公共子表达式，比如另一个值（指令）也算出来一样的值，我们就替换过来然后删掉这条冗余指令。
+
+通过维护上述uses，user关系，上述操作（也维护了这些关系）能够以较高的效率实现。
+
+### 实现的优化
+
+中端：
+
+- 指令简化，简化如phi，算术，连续加法等指令
+- 控制流图优化，删除空块，不可达块，唯一前驱后继块合并等
+- 函数内联
+- 全局常量识别，识别没被标为`const`但实际上是常量的变量
+- 简单死代码删除
+- 简单常量传播
+- GVNGCM（全局值标号和全局代码移动）
+- Mem2Reg，生成SSA形式
+
+后端：
+
+- 跳转优化，优化连续跳转和跳转到后继紧邻块
+- 窥孔优化
+- 除法优化，用低代价运算替代高代价的除法和模运算
+- 图着色寄存器分配
