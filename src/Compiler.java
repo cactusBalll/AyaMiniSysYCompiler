@@ -183,6 +183,7 @@ public class Compiler {
             new Mem2Reg().run(compUnit);
 
             compUnit.maintainUser();
+
             new MarkFunc().run(compUnit);
             new SimpleCP().run(compUnit);
 
@@ -196,28 +197,32 @@ public class Compiler {
                 compUnit.fullMaintain();
                 new ContinuousAdd().run(compUnit);
                 compUnit.fullMaintain();
+
                 new SimpleCP().run(compUnit);
                 compUnit.fullMaintain();
             }
             new PrecSucc().run(compUnit);
             new BBInfo().run(compUnit);
+            if (AyaConfig.OPT) {
 
-            new GVNGCM().run(compUnit);
-            compUnit.fullMaintain();
-            new SimplifyInstr().run(compUnit);
-            compUnit.fullMaintain();
-            new ContinuousAdd().run(compUnit);
-            compUnit.fullMaintain();
-            new RecFuncIdiom2().run(compUnit);
-            compUnit.fullMaintain();
-            new FuncInline().run(compUnit);
-            compUnit.fullMaintain();
-            new PrecSucc().run(compUnit);
-            new BBInfo().run(compUnit);
-            new SimpleCP().run(compUnit);
-            compUnit.fullMaintain();
-            new RemoveNoUserFunc().run(compUnit);
-            compUnit.fullMaintain();
+                new GVNGCM().run(compUnit);
+                compUnit.fullMaintain();
+                new SimplifyInstr().run(compUnit);
+                compUnit.fullMaintain();
+                new ContinuousAdd().run(compUnit);
+                compUnit.fullMaintain();
+                new RecFuncIdiom2().run(compUnit);
+                compUnit.fullMaintain();
+                new FuncInline().run(compUnit);
+                compUnit.fullMaintain();
+                new PrecSucc().run(compUnit);
+                new BBInfo().run(compUnit);
+                new SimpleCP().run(compUnit);
+                compUnit.fullMaintain();
+                new RemoveNoUserFunc().run(compUnit);
+                compUnit.fullMaintain();
+            }
+
 
             compUnit.setValueName();
             System.out.print(compUnit);
